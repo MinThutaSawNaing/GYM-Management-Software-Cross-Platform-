@@ -1077,6 +1077,33 @@
                     }
                 });
             });
+            // Send message to admin
+            const sendMessageBtn = document.getElementById('sendMessageBtn');
+            if (sendMessageBtn) {
+                sendMessageBtn.addEventListener('click', function() {
+                    const form = document.getElementById('sendMessageForm');
+                    const formData = new FormData(form);
+                    const data = new URLSearchParams(formData);
+
+                    fetch('/send-message', { 
+                        method: 'POST', 
+                        body: data 
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        if(data.success) {
+                            bootstrap.Modal.getInstance(document.getElementById('sendMessageModal')).hide();
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while sending message');
+                    });
+                });
+            }
+
 
             // Subscription Functions
             document.getElementById('submitSubscriptionBtn').addEventListener('click', function() {
