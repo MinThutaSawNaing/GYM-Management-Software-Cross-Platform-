@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Management System - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo i {
+            font-size: 48px;
+            color: #343a40;
+        }
+        .logo h2 {
+            margin-top: 10px;
+            color: #343a40;
+        }
+        .form-control:focus {
+            border-color: #343a40;
+            box-shadow: 0 0 0 0.25rem rgba(52, 58, 64, 0.25);
+        }
+        .btn-primary {
+            background-color: #343a40;
+            border-color: #343a40;
+        }
+        .btn-primary:hover {
+            background-color: #23272b;
+            border-color: #23272b;
+        }
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .captcha-display {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            margin-right: 15px;
+            user-select: none;
+        }
+        .captcha-refresh {
+            cursor: pointer;
+            color: #343a40;
+        }
+        .mailbox-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .otp-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .otp-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    {% if page == 'mailbox' %}
+    <!-- Mailbox Page -->
+    <div class="mailbox-container">
+        <div class="logo">
+            <i class="bi bi-envelope"></i>
+            <h2>OTP Mailbox</h2>
+        </div>
+        <p class="text-muted mb-4">This is a simulated mailbox for OTP codes. In a real application, these would be sent to users' email addresses.</p>
+        
+        {% if otps %}
+            {% for otp in otps %}
+            <div class="otp-item">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>Email:</strong> {{ otp.email }}<br>
+                        <strong>Code:</strong> {{ otp.code }}<br>
+                        <strong>Expires:</strong> {{ otp.expires_at }}<br>
+                        <strong>Status:</strong> 
+                        {% if otp.used %}
+                            <span class="badge bg-success">Used</span>
+                        {% else %}
+                            <span class="badge bg-warning">Unused</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <small class="text-muted">{{ otp.created_at }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center">No OTP codes found.</p>
+        {% endif %}
+        
+        <div class="text-center mt-4">
+            <a href="/login" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Login
+            </a>
+        </div>
+    </div>
+    {% elif page == 'otp' %}
+    <!-- OTP Verification Page -->
+    <div class="login-container">
+        <div class="logo">
+            <i class="bi bi-shield-lock"></i>
+            <h2>Verify OTP</h2>
+        </div>
+        <p class="text-muted mb-4">We've sent a 6-digit OTP code to your email. Please enter it below to complete registration.</p>
+        
+        <form action="/verify-otp" method="post">
+            <div class="mb-3">
+                <label for="otp" class="form-label">OTP Code</label>
+                <input type="text" class="form-control" id="otp" name="otp" placeholder="Enter 6-digit code" required maxlength="6">
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Verify</button>
+            </div>
+        </form>
+        
+        <div class="text-center mt-3">
+            <a href="/mailbox" class="text-decoration-none">
+                <i class="bi bi-envelope"></i> Check OTP Mailbox
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <!-- Login/Register Page -->
+    <div class="login-container">
+        <div class="logo">
+            <i class="bi bi-activity"></i>
+            <h2>Gym Management</h2>
+        </div>
+        
+        <!-- Login/Register Tabs -->
+        <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if page == 'login' %}active{% endif %}" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-panel" type="button" role="tab">
+                    Login
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if page == 'register' %}active{% endif %}" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-panel" type="button" role="tab">
+                    Register
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="authTabsContent">
+            <!-- Login Panel -->
+            <div class="tab-pane fade {% if page == 'login' %}show active{% endif %}" id="login-panel" role="tabpanel">
+                <form action="/login" method="post">
+                    <div class="mb-3">
+                        <label for="loginUsername" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="loginUsername" name="username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="loginPassword" name="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">CAPTCHA</label>
+                        <div class="captcha-container">
+                            <div class="captcha-display" id="loginCaptchaDisplay">{{ captcha }}</div>
+                            <i class="bi bi-arrow-clockwise captcha-refresh" onclick="refreshCaptcha('login')"></i>
+                        </div>
+                        <input type="text" class="form-control" name="captcha" placeholder="Enter CAPTCHA" required maxlength="4">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Register Panel -->
+            <div class="tab-pane fade {% if page == 'register' %}show active{% endif %}" id="register-panel" role="tabpanel">
+                <form action="/register" method="post">
+                    <div class="mb-3">
+                        <label for="registerUsername" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="registerUsername" name="username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="registerEmail" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" id="registerEmail" name="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="registerPassword" name="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="registerRole" class="form-label">Role</label>
+                        <select class="form-select" id="registerRole" name="role">
+                            <option value="user">User</option>
+                            <option value="trainer">Trainer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">CAPTCHA</label>
+                        <div class="captcha-container">
+                            <div class="captcha-display" id="registerCaptchaDisplay">{{ captcha }}</div>
+                            <i class="bi bi-arrow-clockwise captcha-refresh" onclick="refreshCaptcha('register')"></i>
+                        </div>
+                        <input type="text" class="form-control" name="captcha" placeholder="Enter CAPTCHA" required maxlength="4">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="/mailbox" class="text-decoration-none">
+                <i class="bi bi-envelope"></i> OTP Mailbox
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 5">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Refresh CAPTCHA
+        function refreshCaptcha(formType) {
+            const captchaDisplay = document.getElementById(formType + 'CaptchaDisplay');
+            const newCaptcha = Math.floor(1000 + Math.random() * 9000).toString();
+            captchaDisplay.textContent = newCaptcha;
+        }
+        
+        // Auto-focus on first input field
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstInput = document.querySelector('input:not([type="hidden"])');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

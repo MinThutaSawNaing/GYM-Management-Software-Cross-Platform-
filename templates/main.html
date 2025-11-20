@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gym Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 20px;
+        }
+        .navbar {
+            background-color: #343a40;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 10px;
+        }
+        .card-header {
+            background-color: #343a40;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .btn-primary {
+            background-color: #343a40;
+            border-color: #343a40;
+        }
+        .btn-primary:hover {
+            background-color: #23272b;
+            border-color: #23272b;
+        }
+        .tab-content {
+            padding-top: 20px;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #343a40;
+            color: white;
+            border-color: #343a40;
+        }
+        .qr-scanner {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .message-sent, .message-received {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .message-sent {
+            background-color: #e9ecef;
+            text-align: right;
+        }
+        .message-received {
+            background-color: #d1ecf1;
+        }
+        .kpay-qr {
+            max-width: 300px;
+            margin: 0 auto;
+            display: block;
+        }
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .check-in-out-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .checked-in-users {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .checked-in-users .table {
+            margin-bottom: 0;
+        }
+        .checked-in-users .badge {
+            font-size: 0.75em;
+        }
+        .check-status {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .checked-in {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .checked-out {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .subscription-status {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .active-subscription {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .pending-subscription {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .no-subscription {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-activity"></i> Gym Management System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Admin Dashboard -->
+        {% if role == 'admin' %}
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                            <i class="bi bi-people"></i> Users
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="subscriptions-tab" data-bs-toggle="tab" data-bs-target="#subscriptions" type="button" role="tab">
+                            <i class="bi bi-credit-card"></i> Subscriptions
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                            <i class="bi bi-envelope"></i> Messages
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="blogs-tab" data-bs-toggle="tab" data-bs-target="#blogs" type="button" role="tab">
+                            <i class="bi bi-journal-text"></i> Blogs
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qr" type="button" role="tab">
+                            <i class="bi bi-qr-code"></i> QR Codes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="checkedin-tab" data-bs-toggle="tab" data-bs-target="#checkedin" type="button" role="tab">
+                            <i class="bi bi-people-fill"></i> Checked-in Users
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="adminTabsContent">
+                    <!-- Dashboard Tab -->
+                    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Users</h5>
+                                        <h2 class="text-primary">{{ users|length }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Pending Subscriptions</h5>
+                                        <h2 class="text-warning">{{ pending_subscriptions|length }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Unread Messages</h5>
+                                        <h2 class="text-info">{{ all_messages|selectattr('reply', 'equalto', None)|list|length }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Total Blogs</h5>
+                                        <h2 class="text-success">{{ all_blogs|length }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Users Tab -->
+                    <div class="tab-pane fade" id="users" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>User Management</h3>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                <i class="bi bi-plus-circle"></i> Add User
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Approved</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.id }}</td>
+                                        <td>{{ user.username }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.role }}</td>
+                                        <td>
+                                            {% if user.approved %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary btn-edit-user"
+                                                    data-user-id="{{ user.id }}"
+                                                    data-username="{{ user.username }}"
+                                                    data-email="{{ user.email }}"
+                                                    data-role="{{ user.role }}"
+                                                    data-approved="{{ user.approved }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger btn-delete-user" data-user-id="{{ user.id }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Subscriptions Tab -->
+                    <div class="tab-pane fade" id="subscriptions" role="tabpanel">
+                        <h3>Subscription Management</h3>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Plan</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sub in all_subscriptions %}
+                                    <tr>
+                                        <td>{{ sub.id }}</td>
+                                        <td>{{ sub.username }}</td>
+                                        <td>{{ sub.email }}</td>
+                                        <td>{{ sub.plan }}</td>
+                                        <td>
+                                            {% if sub.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif sub.status == 'active' %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sub.created_at }}</td>
+                                        <td>
+                                            {% if sub.status == 'pending' %}
+                                                <button class="btn btn-sm btn-success btn-approve-subscription" data-subscription-id="{{ sub.id }}">
+                                                    <i class="bi bi-check-circle"></i> Approve
+                                                </button>
+                                                <button class="btn btn-sm btn-danger btn-reject-subscription" data-subscription-id="{{ sub.id }}">
+                                                    <i class="bi bi-x-circle"></i> Reject
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages Tab -->
+                    <div class="tab-pane fade" id="messages" role="tabpanel">
+                        <h3>Messages</h3>
+                        <div class="accordion" id="messagesAccordion">
+                            {% for message in all_messages %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="message{{ message.id }}">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMessage{{ message.id }}">
+                                        <div class="d-flex justify-content-between w-100">
+                                            <span>{{ message.subject }} - {{ message.username }}</span>
+                                            {% if not message.reply %}
+                                                <span class="badge bg-primary">New</span>
+                                            {% endif %}
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapseMessage{{ message.id }}" class="accordion-collapse collapse" data-bs-parent="#messagesAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>From:</strong> {{ message.username }}</p>
+                                        <p><strong>Date:</strong> {{ message.created_at }}</p>
+                                        <p><strong>Message:</strong> {{ message.message }}</p>
+                                        
+                                        {% if message.reply %}
+                                            <div class="card mt-3">
+                                                <div class="card-header">Reply</div>
+                                                <div class="card-body">
+                                                    <p>{{ message.reply }}</p>
+                                                    <p><small class="text-muted">Replied at: {{ message.replied_at }}</small></p>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div class="mt-3">
+                                                <textarea class="form-control reply-text" id="replyText{{ message.id }}" rows="3" placeholder="Type your reply..."></textarea>
+                                                <button class="btn btn-primary mt-2 btn-reply-message" data-message-id="{{ message.id }}">
+                                                    <i class="bi bi-send"></i> Send Reply
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Blogs Tab -->
+                    <div class="tab-pane fade" id="blogs" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>Blog Management</h3>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createBlogModal">
+                                <i class="bi bi-plus-circle"></i> Add Blog
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for blog in all_blogs %}
+                                    <tr>
+                                        <td>{{ blog.id }}</td>
+                                        <td>{{ blog.title }}</td>
+                                        <td>{{ blog.username }}</td>
+                                        <td>{{ blog.created_at }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary btn-edit-blog"
+                                                    data-blog-id="{{ blog.id }}"
+                                                    data-title="{{ blog.title }}"
+                                                    data-content="{{ blog.content }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger btn-delete-blog" data-blog-id="{{ blog.id }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- QR Codes Tab -->
+                    <div class="tab-pane fade" id="qr" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>QR Code Management</h3>
+                            <button class="btn btn-primary" id="generateNewQrBtn">
+                                <i class="bi bi-arrow-clockwise"></i> Generate New QR Codes
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">User QR Code</div>
+                                    <div class="card-body text-center">
+                                        <div id="userQrCode" class="mb-3"></div>
+                                        <p class="text-muted">{{ user_qr }}</p>
+                                        <button class="btn btn-primary btn-print-qr" data-qr-type="user" data-qr-value="{{ user_qr }}">
+                                            <i class="bi bi-printer"></i> Print
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">Trainer QR Code</div>
+                                    <div class="card-body text-center">
+                                        <div id="trainerQrCode" class="mb-3"></div>
+                                        <p class="text-muted">{{ trainer_qr }}</p>
+                                        <button class="btn btn-primary btn-print-qr" data-qr-type="trainer" data-qr-value="{{ trainer_qr }}">
+                                            <i class="bi bi-printer"></i> Print
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Checked-in Users Tab -->
+                    <div class="tab-pane fade" id="checkedin" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3>Currently Checked-in Users</h3>
+                            <button class="btn btn-primary" id="refreshCheckedInBtn">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="checkedInUsersList">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- User/Trainer Dashboard -->
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Announcements/Blogs -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-megaphone"></i> Announcements
+                    </div>
+                    <div class="card-body">
+                        {% if blogs %}
+                            {% for blog in blogs %}
+                            <div class="mb-3">
+                                <h5>{{ blog.title }}</h5>
+                                <p>{{ blog.content }}</p>
+                                <small class="text-muted">Posted on: {{ blog.created_at }}</small>
+                                <hr>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No announcements available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Messages -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-envelope"></i> Messages
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#sendMessageModal">
+                            <i class="bi bi-plus-circle"></i> Send Message
+                        </button>
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5>{{ message.subject }}</h5>
+                                    <p>{{ message.message }}</p>
+                                    <small class="text-muted">Sent on: {{ message.created_at }}</small>
+                                    
+                                    {% if message.reply %}
+                                        <div class="mt-3 p-3 bg-light rounded">
+                                            <h6>Reply:</h6>
+                                            <p>{{ message.reply }}</p>
+                                            <small class="text-muted">Replied on: {{ message.replied_at }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No messages sent yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Subscription Status -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-credit-card"></i> Subscription
+                    </div>
+                    <div class="card-body">
+                        {% if subscription %}
+                            {% if subscription.status == 'active' %}
+                                <div class="subscription-status active-subscription">
+                                    <i class="bi bi-check-circle"></i> Active Subscription
+                                </div>
+                                <p><strong>Plan:</strong> {{ subscription.plan }}</p>
+                                <p><strong>Status:</strong> Active</p>
+                            {% elif subscription.status == 'pending' %}
+                                <div class="subscription-status pending-subscription">
+                                    <i class="bi bi-clock"></i> Pending Approval
+                                </div>
+                                <p><strong>Plan:</strong> {{ subscription.plan }}</p>
+                                <p><strong>Status:</strong> Pending</p>
+                                <p class="text-muted">Your subscription is pending approval from the admin.</p>
+                            {% else %}
+                                <div class="subscription-status no-subscription">
+                                    <i class="bi bi-x-circle"></i> Rejected Subscription
+                                </div>
+                                <p><strong>Plan:</strong> {{ subscription.plan }}</p>
+                                <p><strong>Status:</strong> Rejected</p>
+                                <p class="text-muted">Your subscription was rejected. Please contact admin for more information.</p>
+                            {% endif %}
+                        {% else %}
+                            <div class="subscription-status no-subscription">
+                                <i class="bi bi-x-circle"></i> No Active Subscription
+                            </div>
+                            <p>You don't have an active subscription.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#subscriptionModal">
+                                <i class="bi bi-plus-circle"></i> Subscribe Now
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Check-in/Check-out -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-qr-code-scan"></i> Check-in / Check-out
+                    </div>
+                    <div class="card-body">
+                        {% if check_logs %}
+                            {% if check_logs[0].check_type == 'in' %}
+                                <div class="check-status checked-in">
+                                    <i class="bi bi-check-circle"></i> Currently Checked In
+                                </div>
+                            {% else %}
+                                <div class="check-status checked-out">
+                                    <i class="bi bi-x-circle"></i> Currently Checked Out
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="check-status checked-out">
+                                <i class="bi bi-x-circle"></i> Currently Checked Out
+                            </div>
+                        {% endif %}
+                        
+                        <button class="btn btn-primary check-in-out-btn" id="startQRScannerBtn">
+                            <i class="bi bi-qr-code-scan"></i> Scan QR Code
+                        </button>
+                        
+                        <div id="qr-reader" class="qr-scanner" style="display: none;"></div>
+                        
+                        <div class="mt-3">
+                            <h6>Recent Check-ins/Check-outs:</h6>
+                            {% if check_logs %}
+                                <ul class="list-group">
+                                    {% for log in check_logs %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-{{ 'box-arrow-in-right' if log.check_type == 'in' else 'box-arrow-right' }}"></i>
+                                            Check-{{ log.check_type }}
+                                        </span>
+                                        <small>{{ log.timestamp }}</small>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No check-in/out history yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modals -->
+    <!-- Create User Modal -->
+    <div class="modal fade" id="createUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" required>
+                                <option value="user">User</option>
+                                <option value="trainer">Trainer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="approved" checked>
+                            <label class="form-check-label" for="approved">Approved</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="createUserBtn">Create User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="editUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPassword" class="form-label">Password (leave blank to keep current)</label>
+                            <input type="password" class="form-control" id="editPassword">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editRole" class="form-label">Role</label>
+                            <select class="form-select" id="editRole" required>
+                                <option value="user">User</option>
+                                <option value="trainer">Trainer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="editApproved">
+                            <label class="form-check-label" for="editApproved">Approved</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="updateUserBtn">Update User</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Blog Modal -->
+    <div class="modal fade" id="createBlogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Blog</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createBlogForm">
+                        <div class="mb-3">
+                            <label for="blogTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="blogTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="blogContent" class="form-label">Content</label>
+                            <textarea class="form-control" id="blogContent" name="content" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="createBlogBtn">Create Blog</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Blog Modal -->
+    <div class="modal fade" id="editBlogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Blog</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBlogForm">
+                        <input type="hidden" id="editBlogId" name="blog_id">
+                        <div class="mb-3">
+                            <label for="editBlogTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="editBlogTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBlogContent" class="form-label">Content</label>
+                            <textarea class="form-control" id="editBlogContent" name="content" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="updateBlogBtn">Update Blog</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Message Modal -->
+    <div class="modal fade" id="sendMessageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                   <form id="sendMessageForm">
+                        <div class="mb-3">
+                            <label for="messageSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="messageSubject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="messageContent" class="form-label">Message</label>
+                            <textarea class="form-control" id="messageContent" name="message" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="sendMessageBtn">Send Message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div class="modal fade" id="subscriptionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Subscribe to Gym</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="subscriptionForm">
+                        <div class="mb-3">
+                            <label for="subscriptionPlan" class="form-label">Select Plan</label>
+                            <select class="form-select" id="subscriptionPlan" name="plan" required>
+                                <option value="">Select a plan</option>
+                                <option value="monthly">Monthly - $30</option>
+                                <option value="quarterly">Quarterly - $80</option>
+                                <option value="yearly">Yearly - $300</option>
+                            </select>
+                        </div>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h6>Payment Method</h6>
+                        <p>Please scan KPay QR code below to complete your payment:</p>
+                        <div class="kpay-qr-placeholder bg-light p-3 text-center">
+                            <i class="bi bi-qr-code" style="font-size: 5rem;"></i>
+                            <p class="mt-2">KPay QR Code</p>
+                        </div>
+                        <p class="text-center mt-2">After payment, click "Done" to submit your subscription for approval.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="submitSubscriptionBtn">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="btn btn-primary refresh-btn" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define server-side variables as JS variables to avoid editor errors
+            const userRole = "{{ role }}";
+            const userQrValue = "{{ user_qr }}";
+            const trainerQrValue = "{{ trainer_qr }}";
+
+            // Generate QR codes for admin
+            if (userRole === 'admin' && typeof QRCode !== 'undefined') {
+                new QRCode(document.getElementById("userQrCode"), {
+                    text: userQrValue,
+                    width: 200,
+                    height: 200
+                });
+                new QRCode(document.getElementById("trainerQrCode"), {
+                    text: trainerQrValue,
+                    width: 200,
+                    height: 200
+                });
+            }
+
+            // QR Scanner
+            const startQRScannerBtn = document.getElementById('startQRScannerBtn');
+            if (startQRScannerBtn) {
+                startQRScannerBtn.addEventListener('click', startQRScanner);
+            }
+
+            function startQRScanner() {
+                const qrReader = document.getElementById('qr-reader');
+                qrReader.style.display = 'block';
+                
+                const html5QrCode = new Html5Qrcode(qrReader.id);
+                
+                Html5Qrcode.getCameras().then(devices => {
+                    if (devices && devices.length) {
+                        const cameraId = devices[0].id;
+                        html5QrCode.start(
+                            cameraId,
+                            { fps: 10, qrbox: {width: 250, height: 250} },
+                            (decodedText) => {
+                                html5QrCode.stop().then(() => {
+                                    qrReader.style.display = 'none';
+                                    fetch('/check-in-out', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                        body: 'qr_value=' + encodeURIComponent(decodedText)
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        alert(data.message);
+                                        if(data.success) {
+                                            // Refresh the checked-in users list if admin
+                                            if (userRole === 'admin') {
+                                                loadCheckedInUsers();
+                                            }
+                                            // Also update the user's own check-in status
+                                            location.reload();
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                        alert('An error occurred during check-in/out');
+                                    });
+                                }).catch(err => console.error(`Unable to stop scanning: ${err}`));
+                            },
+                            () => {} // Silently ignore scan errors
+                        ).catch(err => {
+                            console.error(`Unable to start scanning: ${err}`);
+                            alert('Unable to access camera. Please check permissions.');
+                        });
+                    }
+                }).catch(err => {
+                    console.error(`Unable to get cameras: ${err}`);
+                    alert('Unable to access camera. Please check permissions.');
+                });
+            }
+            
+            // Load checked-in users (only for admin)
+            function loadCheckedInUsers() {
+                // Only proceed if we're on admin page
+                if (userRole === 'admin') {
+                    fetch('/get-checked-in-users')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const container = document.getElementById('checkedInUsersList');
+                            
+                            if (data.users.length === 0) {
+                                container.innerHTML = '<p class="text-muted text-center">No users are currently checked in.</p>';
+                            } else {
+                                let html = '<div class="table-responsive"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Check-in Time</th></tr></thead><tbody>';
+                                
+                                data.users.forEach(user => {
+                                    const roleIcon = user.role === 'trainer' ? '<i class="bi bi-person-badge"></i>' : '<i class="bi bi-person"></i>';
+                                    const checkInTime = new Date(user.check_in_time).toLocaleString();
+                                    
+                                    html += `
+                                        <tr>
+                                            <td>${roleIcon} ${user.username}</td>
+                                            <td><span class="badge bg-${user.role === 'trainer' ? 'info' : 'secondary'}">${user.role}</span></td>
+                                            <td>${checkInTime}</td>
+                                        </tr>
+                                    `;
+                                });
+                                
+                                html += '</tbody></table></div>';
+                                container.innerHTML = html;
+                            }
+                        } else {
+                            document.getElementById('checkedInUsersList').innerHTML = '<p class="text-danger text-center">Error loading checked-in users.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        document.getElementById('checkedInUsersList').innerHTML = '<p class="text-danger text-center">Error loading checked-in users.</p>';
+                    });
+                }
+            }
+
+            // Only set up event listeners if we're on admin page
+            if (userRole === 'admin') {
+                // Load checked-in users when checked-in tab is shown
+                document.getElementById('checkedin-tab').addEventListener('shown.bs.tab', function () {
+                    loadCheckedInUsers();
+                });
+                
+                // Refresh button click handler
+                const refreshBtn = document.getElementById('refreshCheckedInBtn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', loadCheckedInUsers);
+                }
+                
+                // Auto-refresh every 30 seconds when on checked-in tab
+                setInterval(function() {
+                    const checkedInTab = document.getElementById('checkedin-tab');
+                    if (checkedInTab && checkedInTab.classList.contains('active')) {
+                        loadCheckedInUsers();
+                    }
+                }, 30000);
+            }
+
+            // User Management Functions
+            document.getElementById('createUserBtn').addEventListener('click', function() {
+                const form = document.getElementById('createUserForm');
+                const formData = new FormData(form);
+                const data = new URLSearchParams(formData);
+                
+                fetch('/create-user', { method: 'POST', body: data })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+                    if(data.success) location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while creating user');
+                });
+            });
+
+            document.querySelectorAll('.btn-edit-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const username = this.dataset.username;
+                    const email = this.dataset.email;
+                    const role = this.dataset.role;
+                    const approved = this.dataset.approved === 'True' ? true : false;
+
+                    document.getElementById('editUserId').value = userId;
+                    document.getElementById('editUsername').value = username;
+                    document.getElementById('editEmail').value = email;
+                    document.getElementById('editRole').value = role;
+                    document.getElementById('editApproved').checked = approved;
+                    
+                    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+                });
+            });
+
+            document.getElementById('updateUserBtn').addEventListener('click', function() {
+                const form = document.getElementById('editUserForm');
+                const formData = new FormData(form);
+                const data = new URLSearchParams(formData);
+                
+                fetch('/edit-user', { method: 'POST', body: data })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                    if(data.success) location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating user');
+                });
+            });
+
+            document.querySelectorAll('.btn-delete-user').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to delete this user?')) {
+                        const userId = this.dataset.userId;
+                        fetch('/delete-user', { method: 'POST', body: `user_id=${encodeURIComponent(userId)}` })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message);
+                            if(data.success) location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while deleting user');
+                        });
+                    }
+                });
+            });
+
+            // Subscription Functions
+            document.getElementById('submitSubscriptionBtn').addEventListener('click', function() {
+                const form = document.getElementById('subscriptionForm');
+                const formData = new FormData(form);
+                const data = new URLSearchParams(formData);
+                
+                fetch('/create-subscription', { method: 'POST', body: data })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) bootstrap.Modal.getInstance(document.getElementById('subscriptionModal')).hide();
+                    if(data.success) location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while creating subscription');
+                });
+            });
+
+            // Generate new QR codes
+            document.getElementById('generateNewQrBtn').addEventListener('click', function() {
+                fetch('/generate-qr-codes')
+                .then(response => response.text())
+                .then(html => {
+                    // Extract the new QR values from the response
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newUserQr = doc.querySelector('[data-qr-type="user"]').dataset.qrValue;
+                    const newTrainerQr = doc.querySelector('[data-qr-type="trainer"]').dataset.qrValue;
+                    
+                    // Update the displayed QR codes
+                    document.getElementById('userQrCode').innerHTML = '';
+                    document.getElementById('trainerQrCode').innerHTML = '';
+                    
+                    new QRCode(document.getElementById("userQrCode"), {
+                        text: newUserQr,
+                        width: 200,
+                        height: 200
+                    });
+                    new QRCode(document.getElementById("trainerQrCode"), {
+                        text: newTrainerQr,
+                        width: 200,
+                        height: 200
+                    });
+                    
+                    // Update the displayed values
+                    document.querySelector('[data-qr-type="user"]').dataset.qrValue = newUserQr;
+                    document.querySelector('[data-qr-type="trainer"]').dataset.qrValue = newTrainerQr;
+                    document.querySelector('[data-qr-type="user"]').parentElement.querySelector('.text-muted').textContent = newUserQr;
+                    document.querySelector('[data-qr-type="trainer"]').parentElement.querySelector('.text-muted').textContent = newTrainerQr;
+                    
+                    alert('QR codes generated successfully!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while generating QR codes');
+                });
+            });
+
+            // Use event delegation for approve buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-approve-subscription')) {
+                    e.preventDefault(); // Prevent any default behavior
+                    
+                    const button = e.target.closest('.btn-approve-subscription');
+                    const subId = button.dataset.subscriptionId;
+                    
+                    if (!subId) {
+                        console.error('Subscription ID not found');
+                        alert('Error: Subscription ID not found');
+                        return;
+                    }
+                    
+                    console.log('Approving subscription with ID:', subId);
+                    
+                    fetch('/approve-subscription', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `subscription_id=${encodeURIComponent(subId)}` 
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response:', data);
+                        alert(data.message);
+                        if(data.success) location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while approving the subscription: ' + error.message);
+                    });
+                }
+                
+                if (e.target.closest('.btn-reject-subscription')) {
+                    e.preventDefault(); // Prevent any default behavior
+                    
+                    const button = e.target.closest('.btn-reject-subscription');
+                    const subId = button.dataset.subscriptionId;
+                    
+                    if (!subId) {
+                        console.error('Subscription ID not found');
+                        alert('Error: Subscription ID not found');
+                        return;
+                    }
+                    
+                    if (confirm('Are you sure you want to reject this subscription?')) {
+                        console.log('Rejecting subscription with ID:', subId);
+                        
+                        fetch('/reject-subscription', { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `subscription_id=${encodeURIComponent(subId)}` 
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Response:', data);
+                            alert(data.message);
+                            if(data.success) location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while rejecting the subscription: ' + error.message);
+                        });
+                    }
+                }
+            });
+            // Message Functions
+            document.getElementById('sendMessageBtn').addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent any default behavior
+                
+                // Get form values directly
+                const subject = document.getElementById('messageSubject').value;
+                const message = document.getElementById('messageContent').value;
+                
+                // Check if values are empty
+                if (!subject || !message) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                // Create form data manually
+                const formData = new URLSearchParams();
+                formData.append('subject', subject);
+                formData.append('message', message);
+                
+                // Send the request
+                fetch('/send-message', { 
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('sendMessageModal')).hide();
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while sending message');
+                });
+            });
+
+            // Use event delegation for reply message buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-reply-message')) {
+                    e.preventDefault(); // Prevent any default behavior
+                    
+                    const button = e.target.closest('.btn-reply-message');
+                    const messageId = button.dataset.messageId;
+                    const replyText = document.querySelector(`#replyText${messageId}`).value;
+                    
+                    if (!replyText) {
+                        alert('Please enter a reply');
+                        return;
+                    }
+                    
+                    console.log('Replying to message with ID:', messageId);
+                    
+                    fetch('/reply-message', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `message_id=${encodeURIComponent(messageId)}&reply=${encodeURIComponent(replyText)}` 
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response:', data);
+                        alert(data.message);
+                        if(data.success) location.reload();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while replying to the message: ' + error.message);
+                    });
+                }
+            });
+
+            // Blog Functions
+            document.getElementById('createBlogBtn').addEventListener('click', function() {
+                const form = document.getElementById('createBlogForm');
+                const formData = new FormData(form);
+                const data = new URLSearchParams(formData);
+                
+                fetch('/create-blog', { method: 'POST', body: data })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) bootstrap.Modal.getInstance(document.getElementById('createBlogModal')).hide();
+                    if(data.success) location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while creating blog');
+                });
+            });
+
+            document.querySelectorAll('.btn-edit-blog').forEach(button => {
+                button.addEventListener('click', function() {
+                    const blogId = this.dataset.blogId;
+                    const title = this.dataset.title;
+                    const content = this.dataset.content;
+                    
+                    document.getElementById('editBlogId').value = blogId;
+                    document.getElementById('editBlogTitle').value = title;
+                    document.getElementById('editBlogContent').value = content;
+                    
+                    new bootstrap.Modal(document.getElementById('editBlogModal')).show();
+                });
+            });
+
+            document.getElementById('updateBlogBtn').addEventListener('click', function() {
+                const form = document.getElementById('editBlogForm');
+                const formData = new FormData(form);
+                const data = new URLSearchParams(formData);
+                
+                fetch('/edit-blog', { method: 'POST', body: data })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success) bootstrap.Modal.getInstance(document.getElementById('editBlogModal')).hide();
+                    if(data.success) location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating blog');
+                });
+            });
+
+            document.querySelectorAll('.btn-delete-blog').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to delete this blog?')) {
+                        const blogId = this.dataset.blogId;
+                        fetch('/delete-blog', { method: 'POST', body: `blog_id=${encodeURIComponent(blogId)}` })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message);
+                            if(data.success) location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while deleting blog');
+                        });
+                    }
+                });
+            });
+
+            // Print QR Code
+            document.querySelectorAll('.btn-print-qr').forEach(button => {
+                button.addEventListener('click', function() {
+                    const type = this.dataset.qrType;
+                    const value = this.dataset.qrValue;
+                    const title = type === 'user' ? 'User Check-in QR Code' : 'Trainer Check-in QR Code';
+                    
+                    const printWindow = window.open('', '_blank');
+                    const html = '' +
+                        '<html>' +
+                            '<head>' +
+                                '<title>' + title + '</title>' +
+                                '<style>' +
+                                    'body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }' +
+                                    'h1 { margin-bottom: 20px; }' +
+                                    '#qrcode { margin: 20px auto; width: 300px; height: 300px; }' +
+                                    '.code-value { font-size: 24px; font-weight: bold; margin-top: 20px; }' +
+                                '</style>' +
+                            '</head>' +
+                            '<body>' +
+                                '<h1>' + title + '</h1>' +
+                                '<div id="qrcode"></div>' +
+                                '<div class="code-value">' + value + '</div>' +
+                                '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></' + 'script>' +
+                                '<script>' +
+                                    'new QRCode(document.getElementById("qrcode"), { text: "' + value + '", width: 300, height: 300 });' +
+                                    'window.onload = function() { window.print(); };' +
+                                '</' + 'script>' +
+                            '</body>' +
+                        '</html>';
+                    printWindow.document.write(html);
+                    printWindow.document.close();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
