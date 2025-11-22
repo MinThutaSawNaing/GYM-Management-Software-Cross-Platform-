@@ -7,9 +7,44 @@ import io
 import base64
 from datetime import datetime, timedelta
 import os
+from werkzeug.utils import secure_filename
+from PIL import Image
 
 app = Flask(__name__)
+
 app.secret_key = 'gym_app_secret_key_12345'
+
+# Configure upload settings
+UPLOAD_FOLDER = 'static/uploads/blog_images'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+BLOG_IMAGE_SIZE = (1200, 627)
+
+# Create upload folder if it doesn't exist
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def resize_and_save_image(file, filename):
+    # Open the image file
+    img = Image.open(file)
+    
+    # Convert to RGB if necessary (for PNG with transparency)
+    if img.mode in ('RGBA', 'P'):
+        img = img.convert('RGB')
+    
+    # Resize the image to the required dimensions
+    img = img.resize(BLOG_IMAGE_SIZE, Image.LANCZOS)
+    
+    # Save the resized image
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    img.save(filepath, 'JPEG', quality=85)
+    
+    return filepath
 
 # Database initialization
 def init_db():
@@ -73,6 +108,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
+        image_path TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         author_id INTEGER,
         FOREIGN KEY (author_id) REFERENCES users (id)
@@ -648,6 +684,23 @@ def create_blog():
     
     title = request.form.get('title')
     content = request.form.get('content')
+    image_path = None
+    
+    # Handle image upload
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename != '' and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Add timestamp to avoid filename conflicts
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"{timestamp}_{filename}"
+            
+            try:
+                image_path = resize_and_save_image(file, filename)
+                # Convert to relative path for database storage
+                image_path = image_path.replace('\\', '/')  # Ensure forward slashes
+            except Exception as e:
+                return jsonify({'success': False, 'message': f'Error processing image: {str(e)}'})
     
     # Check if title is empty
     if not title:
@@ -661,8 +714,8 @@ def create_blog():
     
     conn = get_db_connection()
     conn.execute(
-        'INSERT INTO blogs (title, content, author_id) VALUES (?, ?, ?)',
-        (title, content, author_id)
+        'INSERT INTO blogs (title, content, image_path, author_id) VALUES (?, ?, ?, ?)',
+        (title, content, image_path, author_id)
     )
     conn.commit()
     conn.close()
@@ -679,9 +732,38 @@ def edit_blog():
     content = request.form.get('content')
     
     conn = get_db_connection()
+    
+    # Get current blog to check if we need to delete old image
+    current_blog = conn.execute('SELECT * FROM blogs WHERE id = ?', (blog_id,)).fetchone()
+    old_image_path = current_blog['image_path'] if current_blog else None
+    
+    image_path = old_image_path  # Default to existing image
+    
+    # Handle image upload
+    if 'image' in request.files:
+        file = request.files['image']
+        if file and file.filename != '' and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # Add timestamp to avoid filename conflicts
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"{timestamp}_{filename}"
+            
+            try:
+                # Delete old image if it exists
+                if old_image_path and os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+                
+                # Process and save new image
+                image_path = resize_and_save_image(file, filename)
+                # Convert to relative path for database storage
+                image_path = image_path.replace('\\', '/')  # Ensure forward slashes
+            except Exception as e:
+                conn.close()
+                return jsonify({'success': False, 'message': f'Error processing image: {str(e)}'})
+    
     conn.execute(
-        'UPDATE blogs SET title = ?, content = ? WHERE id = ?',
-        (title, content, blog_id)
+        'UPDATE blogs SET title = ?, content = ?, image_path = ? WHERE id = ?',
+        (title, content, image_path, blog_id)
     )
     conn.commit()
     conn.close()
@@ -696,12 +778,23 @@ def delete_blog():
     blog_id = request.form.get('blog_id')
     
     conn = get_db_connection()
+    
+    # Get blog info to delete associated image
+    blog = conn.execute('SELECT * FROM blogs WHERE id = ?', (blog_id,)).fetchone()
+    
+    # Delete the blog
     conn.execute('DELETE FROM blogs WHERE id = ?', (blog_id,))
     conn.commit()
     conn.close()
     
+    # Delete the image file if it exists
+    if blog and blog['image_path'] and os.path.exists(blog['image_path']):
+        try:
+            os.remove(blog['image_path'])
+        except Exception as e:
+            print(f"Error deleting image: {e}")
+    
     return jsonify({'success': True, 'message': 'Blog deleted successfully'})
-
 @app.route('/check-in-out', methods=['POST'])
 def check_in_out():
     if not is_logged_in():
