@@ -1,0 +1,28 @@
+# requirements.txt for Gym Management Software
+#
+# This file specifies the exact versions of Python packages required for this project to run.
+# This ensures that the environment is reproducible across different machines.
+#
+# To install these dependencies, run the following command in your terminal:
+# pip install -r requirements.txt
+#
+
+# --- Core Web Framework ---
+# Flask is a lightweight WSGI web application framework. It provides the core routing,
+# request handling, and templating capabilities for the application.
+Flask==2.3.3
+
+# --- Dependencies ---
+# Werkzeug is a WSGI utility library for Python. It's a core dependency of Flask
+# and is responsible for handling the low-level details of web server communication.
+Werkzeug==2.3.7
+
+# --- Image Processing ---
+# Pillow is a fork of the Python Imaging Library (PIL). It is used for image manipulation,
+# such as resizing user-uploaded blog images to a standard dimension (1200x627).
+Pillow==10.1.0
+
+# --- QR Code Generation ---
+# This library is used to generate the QR codes for user and trainer check-ins.
+# The '[pil]' extra is specified to ensure it uses Pillow for image generation backend.
+qrcode[pil]==7.4.2
