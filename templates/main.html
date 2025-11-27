@@ -129,6 +129,10 @@
         background-color: #fff3cd;
         color: #856404;
       }
+      .expired-subscription {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
       .no-subscription {
         background-color: #f8d7da;
         color: #721c24;
@@ -216,6 +220,18 @@
                 role="tab"
               >
                 <i class="bi bi-credit-card"></i> Subscriptions
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                class="nav-link"
+                id="expired-subscriptions-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#expired-subscriptions"
+                type="button"
+                role="tab"
+              >
+                <i class="bi bi-x-circle"></i> Expired Accounts
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -337,7 +353,7 @@
                       <th>Username</th>
                       <th>Email</th>
                       <th>Role</th>
-                      <th>Approved</th>
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -349,10 +365,10 @@
                       <td>{{ user.email }}</td>
                       <td>{{ user.role }}</td>
                       <td>
-                        {% if user.approved %}
-                        <span class="badge bg-success">Approved</span>
+                        {% if user.approved == 0 %}
+                        <span class="badge bg-success">Active</span>
                         {% else %}
-                        <span class="badge bg-warning">Pending</span>
+                        <span class="badge bg-danger">Banned</span>
                         {% endif %}
                       </td>
                       <td>
@@ -365,6 +381,14 @@
                           data-approved="{{ user.approved }}"
                         >
                           <i class="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-{{ 'warning' if user.approved == 0 else 'secondary' }} btn-toggle-ban"
+                          data-user-id="{{ user.id }}"
+                          data-user-username="{{ user.username }}"
+                        >
+                          <i class="bi bi-{{ 'ban' if user.approved == 0 else 'check-circle' }}"></i>
+                          {{ 'Ban' if user.approved == 0 else 'Unban' }}
                         </button>
                         <button
                           class="btn btn-sm btn-outline-danger btn-delete-user"
@@ -390,9 +414,9 @@
                       <th>ID</th>
                       <th>Username</th>
                       <th>Email</th>
-                      <th>Plan</th>
+                      <th>Activated Date</th>
+                      <th>Expire Date</th>
                       <th>Status</th>
-                      <th>Created At</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -402,7 +426,8 @@
                       <td>{{ sub.id }}</td>
                       <td>{{ sub.username }}</td>
                       <td>{{ sub.email }}</td>
-                      <td>{{ sub.plan }}</td>
+                      <td>{{ sub.activated_at or '-' }}</td>
+                      <td>{{ sub.expires_at or '-' }}</td>
                       <td>
                         {% if sub.status == 'pending' %}
                         <span class="badge bg-warning">Pending</span>
@@ -412,7 +437,6 @@
                         <span class="badge bg-danger">Rejected</span>
                         {% endif %}
                       </td>
-                      <td>{{ sub.created_at }}</td>
                       <td>
                         {% if sub.status == 'pending' %}
                         <button
@@ -429,6 +453,43 @@
                         </button>
                         {% endif %}
                       </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Expired Subscriptions Tab -->
+            <div class="tab-pane fade" id="expired-subscriptions" role="tabpanel">
+              <h3>Expired Accounts</h3>
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Email</th>
+                      <th>Activated Date</th>
+                      <th>Expired Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for sub in expired_subscriptions %}
+                    <tr>
+                      <td>{{ sub.username }}</td>
+                      <td>{{ sub.email }}</td>
+                      <td>{{ sub.activated_at }}</td>
+                      <td>{{ sub.expires_at }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                          <i class="bi bi-envelope"></i> Send Renewal Notice
+                        </button>
+                      </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                      <td colspan="5" class="text-center">No expired subscriptions found.</td>
                     </tr>
                     {% endfor %}
                   </tbody>
@@ -730,8 +791,6 @@
                 {% endif %}
               </div>
             </div>
-
-          
           </div>
         </div>
 
@@ -781,32 +840,42 @@
               <i class="bi bi-credit-card"></i> Subscription
             </div>
             <div class="card-body">
-              {% if subscription %} {% if subscription.status == 'active' %}
-              <div class="subscription-status active-subscription">
-                <i class="bi bi-check-circle"></i> Active Subscription
-              </div>
-              <p><strong>Plan:</strong> {{ subscription.plan }}</p>
-              <p><strong>Status:</strong> Active</p>
-              {% elif subscription.status == 'pending' %}
-              <div class="subscription-status pending-subscription">
-                <i class="bi bi-clock"></i> Pending Approval
-              </div>
-              <p><strong>Plan:</strong> {{ subscription.plan }}</p>
-              <p><strong>Status:</strong> Pending</p>
-              <p class="text-muted">
-                Your subscription is pending approval from the admin.
-              </p>
+              {% if subscription %}
+                <!-- Check if subscription is expired -->
+                {% if is_expired %}
+                <div class="subscription-status expired-subscription">
+                  <i class="bi bi-x-circle"></i> Expired
+                </div>
+                <p><strong>Plan:</strong> Monthly</p>
+                <p><strong>Status:</strong> Expired on {{ subscription.expires_at }}</p>
+                <p class="text-muted">
+                  Your subscription has expired. Please renew to continue.
+                </p>
+                <button
+                  class="btn btn-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#subscriptionModal"
+                >
+                  <i class="bi bi-arrow-clockwise"></i> Renew Now
+                </button>
+                {% elif subscription.status == 'active' %}
+                <div class="subscription-status active-subscription">
+                  <i class="bi bi-check-circle"></i> Active
+                </div>
+                <p><strong>Plan:</strong> Monthly</p>
+                <p><strong>Activated on:</strong> {{ subscription.activated_at }}</p>
+                <p><strong>Expires on:</strong> {{ subscription.expires_at }}</p>
+                {% else %}
+                <div class="subscription-status pending-subscription">
+                  <i class="bi bi-clock"></i> Pending Approval
+                </div>
+                <p><strong>Plan:</strong> Monthly</p>
+                <p><strong>Status:</strong> Pending</p>
+                <p class="text-muted">
+                  Your subscription is pending approval from the admin.
+                </p>
+                {% endif %}
               {% else %}
-              <div class="subscription-status no-subscription">
-                <i class="bi bi-x-circle"></i> Rejected Subscription
-              </div>
-              <p><strong>Plan:</strong> {{ subscription.plan }}</p>
-              <p><strong>Status:</strong> Rejected</p>
-              <p class="text-muted">
-                Your subscription was rejected. Please contact admin for more
-                information.
-              </p>
-              {% endif %} {% else %}
               <div class="subscription-status no-subscription">
                 <i class="bi bi-x-circle"></i> No Active Subscription
               </div>
@@ -820,8 +889,6 @@
               </button>
               {% endif %}
             </div>
-
-          
           </div>
         </div>
       </div>
@@ -880,7 +947,7 @@
                   id="approved"
                   checked
                 />
-                <label class="form-check-label" for="approved">Approved</label>
+                <label class="form-check-label" for="approved">Active</label>
               </div>
             </form>
           </div>
@@ -953,9 +1020,7 @@
                   class="form-check-input"
                   id="editApproved"
                 />
-                <label class="form-check-label" for="editApproved"
-                  >Approved</label
-                >
+                <label class="form-check-label" for="editApproved">Active</label>
               </div>
             </form>
           </div>
@@ -1179,28 +1244,13 @@
             ></button>
           </div>
           <div class="modal-body">
-            <form id="subscriptionForm">
-              <div class="mb-3">
-                <label for="subscriptionPlan" class="form-label"
-                  >Select Plan</label
-                >
-                <select
-                  class="form-select"
-                  id="subscriptionPlan"
-                  name="plan"
-                  required
-                >
-                  <option value="">Select a plan</option>
-                  <option value="monthly">Monthly - $30</option>
-                  <option value="quarterly">Quarterly - $80</option>
-                  <option value="yearly">Yearly - $300</option>
-                </select>
-              </div>
-            </form>
+            <h6>Subscription Plan</h6>
+            <p><strong>Monthly Membership - 50,000 MMK</strong></p>
+            <p class="text-muted">Access the gym for one month from the date of activation.</p>
 
             <div class="mt-4">
               <h6>Payment Method</h6>
-              <p>Please scan KPay QR code below to complete your payment:</p>
+              <p>Please scan the KPay QR code below to complete your payment:</p>
               <div class="kpay-qr-placeholder bg-light p-3 text-center">
                 <i class="bi bi-qr-code" style="font-size: 5rem"></i>
                 <p class="mt-2">KPay QR Code</p>
@@ -1446,7 +1496,15 @@
           .addEventListener("click", function () {
             const form = document.getElementById("createUserForm");
             const formData = new FormData(form);
-            const data = new URLSearchParams(formData);
+            // 'approved' in form now means 'active'. Inverted logic for backend.
+            const isActive = formData.get('approved') ? 0 : 1;
+            const data = new URLSearchParams({
+                username: formData.get('username'),
+                password: formData.get('password'),
+                email: formData.get('email'),
+                role: formData.get('role'),
+                approved: isActive // Send 0 for active, 1 for banned
+            });
 
             fetch("/create-user", { method: "POST", body: data })
               .then((response) => response.json())
@@ -1470,13 +1528,14 @@
             const username = this.dataset.username;
             const email = this.dataset.email;
             const role = this.dataset.role;
-            const approved = this.dataset.approved === "True" ? true : false;
+            // Inverted logic: approved=0 means active, so checkbox should be checked.
+            const isActive = this.dataset.approved == "0";
 
             document.getElementById("editUserId").value = userId;
             document.getElementById("editUsername").value = username;
             document.getElementById("editEmail").value = email;
             document.getElementById("editRole").value = role;
-            document.getElementById("editApproved").checked = approved;
+            document.getElementById("editApproved").checked = isActive;
 
             new bootstrap.Modal(
               document.getElementById("editUserModal")
@@ -1489,7 +1548,16 @@
           .addEventListener("click", function () {
             const form = document.getElementById("editUserForm");
             const formData = new FormData(form);
-            const data = new URLSearchParams(formData);
+            // 'approved' in form now means 'active'. Inverted logic for backend.
+            const isActive = formData.get('approved') ? 0 : 1;
+            const data = new URLSearchParams({
+                user_id: formData.get('user_id'),
+                username: formData.get('username'),
+                password: formData.get('password'),
+                email: formData.get('email'),
+                role: formData.get('role'),
+                approved: isActive // Send 0 for active, 1 for banned
+            });
 
             fetch("/edit-user", { method: "POST", body: data })
               .then((response) => response.json())
@@ -1506,6 +1574,38 @@
                 alert("An error occurred while updating user");
               });
           });
+
+        // New Ban/Unban functionality
+        document.addEventListener("click", function (e) {
+          if (e.target.closest(".btn-toggle-ban")) {
+            e.preventDefault();
+            const button = e.target.closest(".btn-toggle-ban");
+            const userId = button.dataset.userId;
+            const username = button.dataset.username;
+
+            const action = button.textContent.trim().toLowerCase();
+            const confirmationMessage = `Are you sure you want to ${action} ${username}?`;
+
+            if (confirm(confirmationMessage)) {
+              fetch("/toggle-ban-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `user_id=${encodeURIComponent(userId)}`,
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  alert(data.message);
+                  if (data.success) {
+                    location.reload();
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                  alert(`An error occurred while trying to ${action} the user.`);
+                });
+            }
+          }
+        });
 
         document.querySelectorAll(".btn-delete-user").forEach((button) => {
           button.addEventListener("click", function () {
@@ -1560,9 +1660,8 @@
         document
           .getElementById("submitSubscriptionBtn")
           .addEventListener("click", function () {
-            const form = document.getElementById("subscriptionForm");
-            const formData = new FormData(form);
-            const data = new URLSearchParams(formData);
+            // Plan is now fixed on the backend, no need to send it from frontend.
+            const data = new URLSearchParams({ plan: "monthly" });
 
             fetch("/create-subscription", { method: "POST", body: data })
               .then((response) => response.json())
@@ -1635,7 +1734,7 @@
               });
           });
 
-        // Use event delegation for approve buttons
+        // Use event delegation for approve/reject buttons
         document.addEventListener("click", function (e) {
           if (e.target.closest(".btn-approve-subscription")) {
             e.preventDefault(); // Prevent any default behavior
@@ -1844,7 +1943,7 @@
             document.getElementById("editBlogTitle").value = title;
             document.getElementById("editBlogContent").value = content;
 
-            // Show current image if exists
+            // Show current image if it exists
             const editImagePreview =
               document.getElementById("editImagePreview");
             if (imagePath) {

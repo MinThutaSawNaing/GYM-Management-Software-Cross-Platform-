@@ -46,12 +46,25 @@ def resize_and_save_image(file, filename):
     
     return filepath
 
+# Helper function to robustly parse datetime strings
+def parse_datetime(date_string):
+    if not date_string:
+        return None
+    try:
+        # Try parsing with microseconds first
+        return datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S.%f')
+    except ValueError:
+        # If that fails, try parsing without microseconds
+        return datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+
 # Database initialization
 def init_db():
     conn = sqlite3.connect('database/gym.db')
     cursor = conn.cursor()
     
     # Users table
+    # The 'approved' column is now repurposed for 'banned' status.
+    # 0 = Active (not banned), 1 = Banned
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,13 +78,16 @@ def init_db():
     ''')
     
     # Subscriptions table
+    # Updated to include activated_date and expire_date
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS subscriptions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
-        plan TEXT NOT NULL,
+        plan TEXT DEFAULT 'monthly',
         status TEXT DEFAULT 'pending',
         payment_verified INTEGER DEFAULT 0,
+        activated_at TIMESTAMP,
+        expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id)
     )
@@ -137,11 +153,12 @@ def init_db():
     )
     ''')
     
-    # Check if admin exists, if not create one
+    # Check if admin exists, if not create one.
+    # Admin is created as 'active' by setting approved=0.
     cursor.execute("SELECT * FROM users WHERE role='admin'")
     if not cursor.fetchone():
         cursor.execute("INSERT INTO users (username, password, email, role, approved) VALUES (?, ?, ?, ?, ?)",
-                      ('admin', 'admin123', 'admin@gym.com', 'admin', 1))
+                      ('admin', 'admin123', 'admin@gym.com', 'admin', 0)) # Set approved to 0 (active)
     
     # Check if QR codes exist, if not create them
     cursor.execute("SELECT * FROM qr_codes WHERE code_type='user'")
@@ -244,14 +261,36 @@ def login():
         'SELECT * FROM users WHERE username = ? AND password = ?',
         (username, password)
     ).fetchone()
-    conn.close()
     
     if user:
+        # Check if user is banned (approved == 1)
+        if user['approved'] == 1:
+            flash('Your account has been banned. Please contact the administrator.', 'error')
+            captcha = generate_captcha()
+            session['captcha'] = captcha
+            return render_template('login.html', captcha=captcha, page='login')
+
+        # Check if user has an active and non-expired subscription
+        subscription = conn.execute(
+            'SELECT * FROM subscriptions WHERE user_id = ? AND status = "active" ORDER BY created_at DESC LIMIT 1',
+            (user['id'],)
+        ).fetchone()
+
+        # Use the robust parser for expiry check
+        if subscription and subscription['expires_at'] and parse_datetime(subscription['expires_at']) < datetime.now():
+            flash('Your subscription has expired. Please renew to continue.', 'error')
+            captcha = generate_captcha()
+            session['captcha'] = captcha
+            return render_template('login.html', captcha=captcha, page='login')
+
+        conn.close()
+        
         session['user_id'] = user['id']
         session['username'] = user['username']
         session['role'] = user['role']
         return redirect(url_for('main'))
     else:
+        conn.close()
         flash('Invalid username or password', 'error')
         captcha = generate_captcha()
         session['captcha'] = captcha
@@ -319,12 +358,13 @@ def verify_otp():
     email = session['otp_email']
     
     if is_otp_valid(email, otp_input):
-        # OTP is valid, create the user
+        # OTP is valid, create user
         temp_user = session['temp_user']
         conn = get_db_connection()
+        # New users are now 'active' by default (approved=0)
         conn.execute(
-            'INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)',
-            (temp_user['username'], temp_user['password'], temp_user['email'], temp_user['role'])
+            'INSERT INTO users (username, password, email, role, approved) VALUES (?, ?, ?, ?, ?)',
+            (temp_user['username'], temp_user['password'], temp_user['email'], temp_user['role'], 0)
         )
         conn.commit()
         conn.close()
@@ -333,7 +373,7 @@ def verify_otp():
         session.pop('temp_user', None)
         session.pop('otp_email', None)
         
-        flash('Registration successful! Please wait for admin approval.', 'success')
+        flash('Registration successful! You can now log in.', 'success')
         return redirect(url_for('login'))
     else:
         flash('Invalid OTP', 'error')
@@ -376,11 +416,16 @@ def main():
         (user_id,)
     ).fetchall()
     
-    # Get subscription info
+    # Get user's latest subscription
     subscription = conn.execute(
         'SELECT * FROM subscriptions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
         (user_id,)
     ).fetchone()
+
+    # Check if subscription is expired using the robust parser
+    is_expired = False
+    if subscription and subscription['expires_at']:
+        is_expired = parse_datetime(subscription['expires_at']) < datetime.now()
     
     # Get check-in/out logs
     check_logs = conn.execute(
@@ -401,6 +446,7 @@ def main():
         blogs=blogs,
         messages=messages,
         subscription=subscription,
+        is_expired=is_expired, # Pass expiry status to template
         check_logs=check_logs,
         user_qr=user_qr['code_value'] if user_qr else None,
         trainer_qr=trainer_qr['code_value'] if trainer_qr else None
@@ -419,6 +465,7 @@ def admin():
     
     # Get all users
     users = conn.execute('SELECT * FROM users ORDER BY created_at DESC').fetchall()
+    
     # Get all subscriptions (not just pending)
     all_subscriptions = conn.execute(
         'SELECT s.*, u.username, u.email FROM subscriptions s JOIN users u ON s.user_id = u.id ORDER BY s.created_at DESC'
@@ -426,6 +473,12 @@ def admin():
     
     # Get pending subscriptions
     pending_subscriptions = [s for s in all_subscriptions if s['status'] == 'pending']
+    
+    # Get expired subscriptions (active in DB but past expiry date) using robust parser
+    expired_subscriptions = [
+        s for s in all_subscriptions 
+        if s['status'] == 'active' and s['expires_at'] and parse_datetime(s['expires_at']) < datetime.now()
+    ]
     
     # Get all messages
     all_messages = conn.execute(
@@ -445,12 +498,13 @@ def admin():
     
     return render_template(
         'main.html',
-        user=user,  # Add this line
-        role='admin',  # Add this line
+        user=user,
+        role='admin',
         page='admin',
         users=users,
         all_subscriptions=all_subscriptions,
         pending_subscriptions=pending_subscriptions,
+        expired_subscriptions=expired_subscriptions, # Pass expired subscriptions to template
         all_messages=all_messages,
         all_blogs=all_blogs,
         user_qr=user_qr['code_value'] if user_qr else None,
@@ -466,8 +520,10 @@ def create_user():
     password = request.form.get('password')
     email = request.form.get('email')
     role = request.form.get('role')
-    approved = 1 if request.form.get('approved') == 'on' else 0
-    
+    # The 'approved' field from the form now represents 'active' status.
+    # 0 means active, 1 means banned. Default to active (0).
+    active = 0 if request.form.get('approved') == 'on' else 1
+
     conn = get_db_connection()
     
     # Check if username or email already exists
@@ -482,7 +538,7 @@ def create_user():
     
     conn.execute(
         'INSERT INTO users (username, password, email, role, approved) VALUES (?, ?, ?, ?, ?)',
-        (username, password, email, role, approved)
+        (username, password, email, role, active)
     )
     conn.commit()
     conn.close()
@@ -499,7 +555,8 @@ def edit_user():
     password = request.form.get('password')
     email = request.form.get('email')
     role = request.form.get('role')
-    approved = 1 if request.form.get('approved') == 'on' else 0
+    # The 'approved' field from the form now represents 'active' status.
+    active = 0 if request.form.get('approved') == 'on' else 1
     
     conn = get_db_connection()
     
@@ -516,18 +573,49 @@ def edit_user():
     if password:
         conn.execute(
             'UPDATE users SET username = ?, password = ?, email = ?, role = ?, approved = ? WHERE id = ?',
-            (username, password, email, role, approved, user_id)
+            (username, password, email, role, active, user_id)
         )
     else:
         conn.execute(
             'UPDATE users SET username = ?, email = ?, role = ?, approved = ? WHERE id = ?',
-            (username, email, role, approved, user_id)
+            (username, email, role, active, user_id)
         )
     
     conn.commit()
     conn.close()
     
     return jsonify({'success': True, 'message': 'User updated successfully'})
+
+@app.route('/toggle-ban-user', methods=['POST'])
+def toggle_ban_user():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+
+    user_id_to_toggle = request.form.get('user_id')
+    if not user_id_to_toggle:
+        return jsonify({'success': False, 'message': 'User ID is required'})
+
+    # Prevent an admin from banning themselves
+    if int(user_id_to_toggle) == session['user_id']:
+        return jsonify({'success': False, 'message': 'You cannot change your own ban status.'})
+
+    conn = get_db_connection()
+    user = conn.execute('SELECT approved FROM users WHERE id = ?', (user_id_to_toggle,)).fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify({'success': False, 'message': 'User not found'})
+
+    # Toggle ban status: 0 (active) becomes 1 (banned), and vice-versa.
+    new_status = 1 if user['approved'] == 0 else 0
+
+    conn.execute('UPDATE users SET approved = ? WHERE id = ?', (new_status, user_id_to_toggle))
+    conn.commit()
+    conn.close()
+
+    status_text = 'banned' if new_status == 1 else 'unbanned'
+    return jsonify({'success': True, 'message': f'User {status_text} successfully.'})
+
 
 @app.route('/delete-user', methods=['POST'])
 def delete_user():
@@ -536,6 +624,10 @@ def delete_user():
     
     user_id = request.form.get('user_id')
     
+    # Prevent an admin from deleting themselves
+    if int(user_id) == session['user_id']:
+        return jsonify({'success': False, 'message': 'You cannot delete your own account.'})
+
     conn = get_db_connection()
     
     # Delete related records
@@ -557,19 +649,20 @@ def create_subscription():
         return jsonify({'success': False, 'message': 'Unauthorized'})
     
     user_id = session['user_id']
-    plan = request.form.get('plan')
+    # Plan is now fixed, but we can keep the field for potential future use
+    plan = "monthly" # Fixed plan
     
     conn = get_db_connection()
     
-    # Check if user already has an active subscription
+    # Check if user already has an active or pending subscription
     existing_subscription = conn.execute(
-        'SELECT * FROM subscriptions WHERE user_id = ? AND status = "active"',
+        'SELECT * FROM subscriptions WHERE user_id = ? AND (status = "active" OR status = "pending")',
         (user_id,)
     ).fetchone()
     
     if existing_subscription:
         conn.close()
-        return jsonify({'success': False, 'message': 'You already have an active subscription'})
+        return jsonify({'success': False, 'message': 'You already have an active or pending subscription.'})
     
     conn.execute(
         'INSERT INTO subscriptions (user_id, plan, status) VALUES (?, ?, ?)',
@@ -578,7 +671,7 @@ def create_subscription():
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'message': 'Subscription created successfully'})
+    return jsonify({'success': True, 'message': 'Subscription request created successfully. Please wait for admin approval.'})
 
 @app.route('/approve-subscription', methods=['POST'])
 def approve_subscription():
@@ -588,14 +681,26 @@ def approve_subscription():
     subscription_id = request.form.get('subscription_id')
     
     conn = get_db_connection()
+    
+    # Get subscription to find user_id
+    subscription = conn.execute('SELECT user_id FROM subscriptions WHERE id = ?', (subscription_id,)).fetchone()
+    if not subscription:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Subscription not found.'})
+
+    # Calculate dates
+    now = datetime.now()
+    expires_at = now + timedelta(days=30)
+    
+    # Update subscription with dates and status
     conn.execute(
-        'UPDATE subscriptions SET status = "active", payment_verified = 1 WHERE id = ?',
-        (subscription_id,)
+        'UPDATE subscriptions SET status = "active", payment_verified = 1, activated_at = ?, expires_at = ? WHERE id = ?',
+        (now, expires_at, subscription_id)
     )
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'message': 'Subscription approved successfully'})
+    return jsonify({'success': True, 'message': 'Subscription approved successfully.'})
 
 @app.route('/reject-subscription', methods=['POST'])
 def reject_subscription():
@@ -893,8 +998,8 @@ def generate_qr_codes():
     
     return render_template(
         'main.html',
-        user=user,  # Add this line
-        role='admin',  # Add this line
+        user=user,
+        role='admin',
         page='qr_codes',
         user_qr_base64=user_qr_base64,
         trainer_qr_base64=trainer_qr_base64,
