@@ -167,18 +167,18 @@
       }
 
       .custom-admin-btn {
-          min-width: 70px; /* Increased to fit text */
-          padding: 0.25rem 0.5rem;
-          margin: 0 2px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.25rem; /* Space between icon and text */
+        min-width: 70px; /* Increased to fit text */
+        padding: 0.25rem 0.5rem;
+        margin: 0 2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem; /* Space between icon and text */
       }
 
       /* Ensure the icon and text are properly aligned */
       .custom-admin-btn i {
-          font-size: 0.9em;
+        font-size: 0.9em;
       }
 
       /* Tables */
@@ -297,13 +297,12 @@
       .btn-group {
         display: flex !important;
         flex-wrap: wrap !important;
-        gap: 5px;      /* space between buttons */
+        gap: 5px; /* space between buttons */
       }
 
       .btn-group .btn {
-        flex: none;    /* prevent weird shrinking */
+        flex: none; /* prevent weird shrinking */
       }
-
 
       /* Mobile Specific */
       @media (max-width: 768px) {
@@ -780,12 +779,14 @@
                               <i class="bi bi-pencil"></i>
                             </button>
                             <button
-                                class="btn btn-sm btn-{{ 'warning' if user.approved == 0 else 'secondary' }} btn-toggle-ban custom-admin-btn"
-                                data-user-id="{{ user.id }}"
-                                data-user-username="{{ user.username }}"
+                              class="btn btn-sm btn-{{ 'warning' if user.approved == 0 else 'secondary' }} btn-toggle-ban custom-admin-btn"
+                              data-user-id="{{ user.id }}"
+                              data-user-username="{{ user.username }}"
                             >
-                                <i class="bi bi-{{ 'ban' if user.approved == 0 else 'check-circle' }}"></i>
-                                {{ 'Ban' if user.approved == 0 else 'Unban' }}
+                              <i
+                                class="bi bi-{{ 'ban' if user.approved == 0 else 'check-circle' }}"
+                              ></i>
+                              {{ 'Ban' if user.approved == 0 else 'Unban' }}
                             </button>
                             <button
                               class="btn btn-sm btn-outline-danger btn-delete-user"
@@ -1535,7 +1536,13 @@
               </div>
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" required />
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  name="email"
+                  required
+                />
               </div>
               <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
@@ -1587,7 +1594,7 @@
           </div>
           <div class="modal-body">
             <form id="editUserForm">
-              <input type="hidden" id="editUserId" />
+              <input type="hidden" id="editUserId" name="user_id" />
               <div class="mb-3">
                 <label for="editUsername" class="form-label">Username</label>
                 <input
@@ -1602,7 +1609,12 @@
                 <label for="editPassword" class="form-label"
                   >Password (leave blank to keep current)</label
                 >
-                <input type="password" class="form-control" id="editPassword" name="password" />
+                <input
+                  type="password"
+                  class="form-control"
+                  id="editPassword"
+                  name="password"
+                />
               </div>
               <div class="mb-3">
                 <label for="editEmail" class="form-label">Email</label>
@@ -2274,6 +2286,7 @@
           updateUserBtn.addEventListener("click", function () {
             const form = document.getElementById("editUserForm");
             const formData = new FormData(form);
+            const userId = document.getElementById("editUserId").value;
             const isActive = formData.get("approved") ? 0 : 1;
             const data = new URLSearchParams({
               user_id: formData.get("user_id"),
@@ -2284,7 +2297,11 @@
               approved: isActive,
             });
 
-            fetch("/edit-user", { method: "POST", body: data })
+            fetch("/edit-user", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: data,
+            })
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
@@ -2345,6 +2362,9 @@
               const userId = this.dataset.userId;
               fetch("/delete-user", {
                 method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
                 body: `user_id=${encodeURIComponent(userId)}`,
               })
                 .then((response) => response.json())
