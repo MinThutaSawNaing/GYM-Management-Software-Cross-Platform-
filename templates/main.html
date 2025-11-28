@@ -1519,6 +1519,7 @@
                   type="text"
                   class="form-control"
                   id="username"
+                  name="username"
                   required
                 />
               </div>
@@ -1528,16 +1529,17 @@
                   type="password"
                   class="form-control"
                   id="password"
+                  name="password"
                   required
                 />
               </div>
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" required />
+                <input type="email" class="form-control" id="email" name="email" required />
               </div>
               <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
-                <select class="form-select" id="role" required>
+                <select class="form-select" id="role" name="role" required>
                   <option value="user">User</option>
                   <option value="trainer">Trainer</option>
                   <option value="admin">Admin</option>
@@ -1548,6 +1550,7 @@
                   type="checkbox"
                   class="form-check-input"
                   id="approved"
+                  name="approved"
                   checked
                 />
                 <label class="form-check-label" for="approved">Active</label>
@@ -1591,6 +1594,7 @@
                   type="text"
                   class="form-control"
                   id="editUsername"
+                  name="username"
                   required
                 />
               </div>
@@ -1598,7 +1602,7 @@
                 <label for="editPassword" class="form-label"
                   >Password (leave blank to keep current)</label
                 >
-                <input type="password" class="form-control" id="editPassword" />
+                <input type="password" class="form-control" id="editPassword" name="password" />
               </div>
               <div class="mb-3">
                 <label for="editEmail" class="form-label">Email</label>
@@ -1606,12 +1610,13 @@
                   type="email"
                   class="form-control"
                   id="editEmail"
+                  name="email"
                   required
                 />
               </div>
               <div class="mb-3">
                 <label for="editRole" class="form-label">Role</label>
-                <select class="form-select" id="editRole" required>
+                <select class="form-select" id="editRole" name="role" required>
                   <option value="user">User</option>
                   <option value="trainer">Trainer</option>
                   <option value="admin">Admin</option>
@@ -1622,6 +1627,7 @@
                   type="checkbox"
                   class="form-check-input"
                   id="editApproved"
+                  name="approved"
                 />
                 <label class="form-check-label" for="editApproved"
                   >Active</label
