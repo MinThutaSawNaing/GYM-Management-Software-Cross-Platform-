@@ -497,6 +497,10 @@
           <i class="bi bi-people-fill"></i>
           <span>Check-ins</span>
         </a>
+        <a href="#attendance" class="bottom-nav-item" data-tab="attendance">
+          <i class="bi bi-calendar-check"></i>
+          <span>Attendance</span>
+        </a>
         <a href="#messages" class="bottom-nav-item" data-tab="messages">
           <i class="bi bi-envelope"></i>
           <span>Messages</span>
@@ -563,6 +567,18 @@
                   role="tab"
                 >
                   <i class="bi bi-speedometer2"></i> Dashboard
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="attendance-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#attendance"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-calendar-check"></i> Attendance
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -1128,6 +1144,82 @@
                           <span class="visually-hidden">Loading...</span>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Attendance Records Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="attendance"
+                role="tabpanel"
+              >
+                <div class="card">
+                  <div class="card-header">
+                    <i class="bi bi-calendar-check"></i> Attendance Records
+                  </div>
+                  <div class="card-body">
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label for="attendanceUsername" class="form-label"
+                          >Username</label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="attendanceUsername"
+                          placeholder="Enter username (optional)"
+                        />
+                      </div>
+                      <div class="col-md-3">
+                        <label for="attendanceStartDate" class="form-label"
+                          >Start Date</label
+                        >
+                        <input
+                          type="date"
+                          class="form-control"
+                          id="attendanceStartDate"
+                        />
+                      </div>
+                      <div class="col-md-3">
+                        <label for="attendanceEndDate" class="form-label"
+                          >End Date</label
+                        >
+                        <input
+                          type="date"
+                          class="form-control"
+                          id="attendanceEndDate"
+                        />
+                      </div>
+                      <div class="col-md-2 d-flex align-items-end">
+                        <button
+                          class="btn btn-primary w-100"
+                          id="filterAttendanceBtn"
+                        >
+                          <i class="bi bi-funnel"></i> Filter
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                          </tr>
+                        </thead>
+                        <tbody id="attendanceRecordsList">
+                          <tr>
+                            <td colspan="4" class="text-center">
+                              Use the filters above to search for attendance
+                              records.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -2810,6 +2902,83 @@
             printWindow.document.close();
           });
         });
+        // Filter Attendance Records
+        const filterAttendanceBtn = document.getElementById(
+          "filterAttendanceBtn"
+        );
+        if (filterAttendanceBtn) {
+          filterAttendanceBtn.addEventListener("click", function () {
+            const username =
+              document.getElementById("attendanceUsername").value;
+            const startDate = document.getElementById(
+              "attendanceStartDate"
+            ).value;
+            const endDate = document.getElementById("attendanceEndDate").value;
+
+            const data = new URLSearchParams({
+              username: username,
+              start_date: startDate,
+              end_date: endDate,
+            });
+
+            fetch("/get-attendance-records", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: data,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  const recordsList = document.getElementById(
+                    "attendanceRecordsList"
+                  );
+
+                  if (data.records.length === 0) {
+                    recordsList.innerHTML = `
+            <tr>
+              <td colspan="4" class="text-center">
+                No attendance records found matching the criteria.
+              </td>
+            </tr>
+          `;
+                  } else {
+                    let html = "";
+                    data.records.forEach((record) => {
+                      const actionIcon =
+                        record.check_type === "in"
+                          ? '<i class="bi bi-box-arrow-in-right text-success"></i>'
+                          : '<i class="bi bi-box-arrow-right text-danger"></i>';
+                      const actionText =
+                        record.check_type === "in" ? "Check-in" : "Check-out";
+                      const timestamp = new Date(
+                        record.timestamp
+                      ).toLocaleString();
+
+                      html += `
+              <tr>
+                <td>${record.username}</td>
+                <td><span class="badge bg-${
+                  record.role === "trainer" ? "info" : "secondary"
+                }">${record.role}</span></td>
+                <td>${actionIcon} ${actionText}</td>
+                <td>${timestamp}</td>
+              </tr>
+            `;
+                    });
+                    recordsList.innerHTML = html;
+                  }
+                } else {
+                  alert(data.message);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while fetching attendance records");
+              });
+          });
+        }
       });
     </script>
   </body>

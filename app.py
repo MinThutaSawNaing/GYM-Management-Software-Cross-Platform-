@@ -1034,6 +1034,47 @@ def get_checked_in_users():
         'success': True,
         'users': [dict(user) for user in checked_in_users]
     })
+@app.route('/get-attendance-records', methods=['POST'])
+def get_attendance_records():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+    
+    username = request.form.get('username', '')
+    start_date = request.form.get('start_date', '')
+    end_date = request.form.get('end_date', '')
+    
+    conn = get_db_connection()
+    
+    # Build the query with optional filters
+    query = '''
+        SELECT u.id, u.username, u.role, cl.check_type, cl.timestamp
+        FROM users u
+        INNER JOIN check_logs cl ON u.id = cl.user_id
+        WHERE 1=1
+    '''
+    params = []
+    
+    if username:
+        query += ' AND u.username LIKE ?'
+        params.append(f'%{username}%')
+    
+    if start_date:
+        query += ' AND DATE(cl.timestamp) >= ?'
+        params.append(start_date)
+    
+    if end_date:
+        query += ' AND DATE(cl.timestamp) <= ?'
+        params.append(end_date)
+    
+    query += ' ORDER BY cl.timestamp DESC'
+    
+    attendance_records = conn.execute(query, params).fetchall()
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'records': [dict(record) for record in attendance_records]
+    })
 
 @app.route('/logout')
 def logout():
