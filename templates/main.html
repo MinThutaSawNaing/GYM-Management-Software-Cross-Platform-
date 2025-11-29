@@ -1209,11 +1209,12 @@
                             <th>Role</th>
                             <th>Action</th>
                             <th>Timestamp</th>
+                            <th>Total Check-in Days</th>
                           </tr>
                         </thead>
                         <tbody id="attendanceRecordsList">
                           <tr>
-                            <td colspan="4" class="text-center">
+                            <td colspan="5" class="text-center">
                               Use the filters above to search for attendance
                               records.
                             </td>
@@ -2938,7 +2939,7 @@
                   if (data.records.length === 0) {
                     recordsList.innerHTML = `
             <tr>
-              <td colspan="4" class="text-center">
+              <td colspan="5" class="text-center">
                 No attendance records found matching the criteria.
               </td>
             </tr>
@@ -2957,15 +2958,14 @@
                       ).toLocaleString();
 
                       html += `
-              <tr>
-                <td>${record.username}</td>
-                <td><span class="badge bg-${
-                  record.role === "trainer" ? "info" : "secondary"
-                }">${record.role}</span></td>
-                <td>${actionIcon} ${actionText}</td>
-                <td>${timestamp}</td>
-              </tr>
-            `;
+                        <tr>
+                          <td>${record.username}</td>
+                          <td><span class="badge bg-${record.role === 'trainer' ? 'info' : 'secondary'}">${record.role}</span></td>
+                          <td>${actionIcon} ${actionText}</td>
+                          <td>${timestamp}</td>
+                          <td><span class="badge bg-primary">${record.checkin_days} days</span></td>
+                        </tr>
+                      `;
                     });
                     recordsList.innerHTML = html;
                   }

@@ -1034,6 +1034,7 @@ def get_checked_in_users():
         'success': True,
         'users': [dict(user) for user in checked_in_users]
     })
+    
 @app.route('/get-attendance-records', methods=['POST'])
 def get_attendance_records():
     if not is_logged_in() or get_user_role() != 'admin':
@@ -1069,11 +1070,35 @@ def get_attendance_records():
     query += ' ORDER BY cl.timestamp DESC'
     
     attendance_records = conn.execute(query, params).fetchall()
+    
+    # Calculate total check-in days for each user
+    user_days = {}
+    for record in attendance_records:
+        user_id = record['id']
+        check_date = record['timestamp'].split(' ')[0]  # Extract date part
+        
+        if user_id not in user_days:
+            user_days[user_id] = set()
+        
+        # Only count days where the user checked in
+        if record['check_type'] == 'in':
+            user_days[user_id].add(check_date)
+    
+    # Convert to dict with count
+    user_checkin_days = {user_id: len(days) for user_id, days in user_days.items()}
+    
     conn.close()
+    
+    # Add check-in days count to each record
+    records_with_days = []
+    for record in attendance_records:
+        record_dict = dict(record)
+        record_dict['checkin_days'] = user_checkin_days.get(record['id'], 0)
+        records_with_days.append(record_dict)
     
     return jsonify({
         'success': True,
-        'records': [dict(record) for record in attendance_records]
+        'records': records_with_days
     })
 
 @app.route('/logout')
