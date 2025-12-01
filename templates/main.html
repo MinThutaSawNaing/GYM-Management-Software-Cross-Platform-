@@ -13,135 +13,426 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"
     />
     <style>
+      :root {
+        --primary-dark: #343a40;
+        --primary-darker: #23272b;
+        --bottom-nav-height: 70px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
         background-color: #f8f9fa;
-        padding-bottom: 20px;
+        padding-bottom: var(--bottom-nav-height);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, sans-serif;
       }
-      .navbar {
-        background-color: #343a40;
+
+      /* Desktop Navigation */
+      .desktop-nav {
+        background-color: var(--primary-dark);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
+
+      /* Mobile Top Bar */
+      .mobile-top-bar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--primary-dark);
+        z-index: 1030;
+        align-items: center;
+        padding: 0 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .mobile-top-bar-title {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      /* Bottom Navigation */
+      .bottom-nav {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--bottom-nav-height);
+        background: white;
+        border-top: 1px solid #dee2e6;
+        z-index: 1030;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .bottom-nav-items {
+        display: flex;
+        height: 100%;
+      }
+
+      .bottom-nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .bottom-nav-item.active {
+        color: #007bff;
+      }
+
+      .bottom-nav-item:hover {
+        background: rgba(0, 123, 255, 0.05);
+      }
+
+      .bottom-nav-item i {
+        font-size: 1.3rem;
+        margin-bottom: 4px;
+      }
+
+      .bottom-nav-item span {
+        font-size: 0.7rem;
+        font-weight: 500;
+      }
+
+      .bottom-nav-badge {
+        position: absolute;
+        top: 8px;
+        right: 20%;
+        background: #dc3545;
+        color: white;
+        font-size: 0.6rem;
+        padding: 2px 5px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+      }
+
+      /* Main Content */
+      .main-content {
+        padding-top: 70px;
+        min-height: 100vh;
+      }
+
+      /* Cards */
       .card {
         margin-bottom: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border: none;
-        border-radius: 10px;
+        border-radius: 12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      }
+
       .card-header {
-        background-color: #343a40;
+        background-color: var(--primary-dark);
         color: white;
-        border-radius: 10px 10px 0 0 !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 15px 20px;
+        font-weight: 600;
       }
+
+      /* Buttons */
       .btn-primary {
-        background-color: #343a40;
-        border-color: #343a40;
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
       }
+
       .btn-primary:hover {
-        background-color: #23272b;
-        border-color: #23272b;
+        background-color: var(--primary-darker);
+        border-color: var(--primary-darker);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
-      .tab-content {
-        padding-top: 20px;
+
+      .custom-admin-btn {
+        min-width: 70px; /* Increased to fit text */
+        padding: 0.25rem 0.5rem;
+        margin: 0 2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem; /* Space between icon and text */
       }
+
+      /* Ensure the icon and text are properly aligned */
+      .custom-admin-btn i {
+        font-size: 0.9em;
+      }
+
+      /* Tables */
+      .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .table {
+        margin-bottom: 0;
+      }
+
+      .table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+      }
+
+      /* Tabs */
+      .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px;
+      }
+
+      .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 12px 20px;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.3s ease;
+      }
+
+      .nav-tabs .nav-link:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
       .nav-tabs .nav-link.active {
-        background-color: #343a40;
+        background-color: var(--primary-dark);
         color: white;
-        border-color: #343a40;
+        border-color: var(--primary-dark);
       }
+
+      /* QR Scanner */
       .qr-scanner {
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
       }
+
+      /* Messages */
       .message-sent,
       .message-received {
-        padding: 10px;
-        border-radius: 10px;
+        padding: 12px 16px;
+        border-radius: 18px;
         margin-bottom: 10px;
+        max-width: 80%;
       }
+
       .message-sent {
         background-color: #e9ecef;
         text-align: right;
+        margin-left: auto;
       }
+
       .message-received {
         background-color: #d1ecf1;
+        margin-right: auto;
       }
-      .kpay-qr {
-        max-width: 300px;
-        margin: 0 auto;
-        display: block;
+
+      /* Status Indicators */
+      .check-status,
+      .subscription-status {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
       }
+
+      .checked-in {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .checked-out {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .active-subscription {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .pending-subscription {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+
+      .expired-subscription {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .no-subscription {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .btn-group {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 5px; /* space between buttons */
+      }
+
+      .btn-group .btn {
+        flex: none; /* prevent weird shrinking */
+      }
+
+      /* Mobile Specific */
+      @media (max-width: 768px) {
+        .desktop-nav {
+          display: none;
+        }
+
+        .mobile-top-bar {
+          display: flex;
+        }
+
+        .bottom-nav {
+          display: block;
+        }
+
+        .main-content {
+          padding-top: 60px;
+        }
+
+        .container {
+          padding: 0 15px;
+        }
+
+        .card {
+          margin-bottom: 15px;
+        }
+
+        .nav-tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-tabs .nav-link {
+          white-space: nowrap;
+          padding: 10px 15px;
+          font-size: 0.9rem;
+        }
+
+        .table {
+          font-size: 0.9rem;
+        }
+
+        .btn {
+          font-size: 0.9rem;
+          padding: 8px 16px;
+        }
+
+        .modal-dialog {
+          margin: 10px;
+        }
+
+        .check-in-out-btn {
+          font-size: 16px;
+          padding: 12px;
+        }
+      }
+
+      /* Animations */
+      @keyframes slideIn {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Refresh Button */
       .refresh-btn {
         position: fixed;
-        bottom: 20px;
+        bottom: 90px;
         right: 20px;
-        z-index: 1000;
-        width: 60px;
-        height: 60px;
+        z-index: 1020;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
       }
-      .check-in-out-btn {
-        width: 100%;
-        padding: 15px;
-        font-size: 18px;
-        margin-bottom: 10px;
+
+      .refresh-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
       }
-      .checked-in-users {
-        max-height: 400px;
-        overflow-y: auto;
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
       }
-      .checked-in-users .table {
-        margin-bottom: 0;
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
       }
-      .checked-in-users .badge {
-        font-size: 0.75em;
+
+      ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
       }
-      .check-status {
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-weight: bold;
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
-      .checked-in {
-        background-color: #d4edda;
-        color: #155724;
+
+      /* Section visibility */
+      .content-section {
+        display: none;
       }
-      .checked-out {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      .subscription-status {
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        text-align: center;
-        font-weight: bold;
-      }
-      .active-subscription {
-        background-color: #d4edda;
-        color: #155724;
-      }
-      .pending-subscription {
-        background-color: #fff3cd;
-        color: #856404;
-      }
-      .expired-subscription {
-        background-color: #f8d7da;
-        color: #721c24;
-      }
-      .no-subscription {
-        background-color: #f8d7da;
-        color: #721c24;
+
+      .content-section.active {
+        display: block;
       }
     </style>
   </head>
   <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <!-- Desktop Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark desktop-nav">
       <div class="container">
         <a class="navbar-brand" href="#">
           <i class="bi bi-activity"></i> Gym Management System
@@ -179,720 +470,1191 @@
       </div>
     </nav>
 
+    <!-- Mobile Top Bar -->
+    <div class="mobile-top-bar">
+      <span class="mobile-top-bar-title" id="mobileTopBarTitle"
+        >Gym Management</span
+      >
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="bottom-nav-items">
+        {% if role == 'admin' %}
+        <a
+          href="#dashboard"
+          class="bottom-nav-item active"
+          data-tab="dashboard"
+        >
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#users" class="bottom-nav-item" data-tab="users">
+          <i class="bi bi-people"></i>
+          <span>Users</span>
+        </a>
+        <a href="#checkedin" class="bottom-nav-item" data-tab="checkedin">
+          <i class="bi bi-people-fill"></i>
+          <span>Check-ins</span>
+        </a>
+        <a href="#attendance" class="bottom-nav-item" data-tab="attendance">
+          <i class="bi bi-calendar-check"></i>
+          <span>Attendance</span>
+        </a>
+        <a href="#messages" class="bottom-nav-item" data-tab="messages">
+          <i class="bi bi-envelope"></i>
+          <span>Messages</span>
+          {% if all_messages|selectattr('reply', 'equalto', None)|list|length >
+          0 %}
+          <span class="bottom-nav-badge"
+            >{{ all_messages|selectattr('reply', 'equalto', None)|list|length
+            }}</span
+          >
+          {% endif %}
+        </a>
+        <a href="#settings" class="bottom-nav-item" data-tab="settings">
+          <i class="bi bi-gear"></i>
+          <span>Settings</span>
+        </a>
+        {% else %}
+        <a
+          href="#announcements"
+          class="bottom-nav-item active"
+          data-tab="announcements"
+        >
+          <i class="bi bi-megaphone"></i>
+          <span>Home</span>
+        </a>
+        <a href="#checkin" class="bottom-nav-item" data-tab="checkin">
+          <i class="bi bi-qr-code-scan"></i>
+          <span>Check-in</span>
+        </a>
+        <a href="#messages" class="bottom-nav-item" data-tab="messages">
+          <i class="bi bi-envelope"></i>
+          <span>Messages</span>
+        </a>
+        <a href="#subscription" class="bottom-nav-item" data-tab="subscription">
+          <i class="bi bi-credit-card"></i>
+          <span>Subscriptions</span>
+        </a>
+        <a href="#settings" class="bottom-nav-item" data-tab="settings">
+          <i class="bi bi-gear"></i>
+          <span>Settings</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
     <!-- Main Content -->
-    <div class="container mt-4">
-      <!-- Admin Dashboard -->
-      {% if role == 'admin' %}
-      <div class="row">
-        <div class="col-12">
-          <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link active"
-                id="dashboard-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#dashboard"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-speedometer2"></i> Dashboard
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="users-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#users"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-people"></i> Users
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="subscriptions-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#subscriptions"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-credit-card"></i> Subscriptions
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="expired-subscriptions-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#expired-subscriptions"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-x-circle"></i> Expired Accounts
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="messages-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#messages"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-envelope"></i> Messages
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="blogs-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#blogs"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-journal-text"></i> Blogs
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="qr-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#qr"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-qr-code"></i> QR Codes
-              </button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button
-                class="nav-link"
-                id="checkedin-tab"
-                data-bs-toggle="tab"
-                data-bs-target="#checkedin"
-                type="button"
-                role="tab"
-              >
-                <i class="bi bi-people-fill"></i> Checked-in Users
-              </button>
-            </li>
-          </ul>
-          <div class="tab-content" id="adminTabsContent">
-            <!-- Dashboard Tab -->
-            <div
-              class="tab-pane fade show active"
-              id="dashboard"
-              role="tabpanel"
+    <div class="main-content">
+      <div class="container mt-4">
+        <!-- Admin Dashboard -->
+        {% if role == 'admin' %}
+        <div class="row">
+          <div class="col-12">
+            <ul
+              class="nav nav-tabs d-none d-md-flex"
+              id="adminTabs"
+              role="tablist"
             >
-              <div class="row">
-                <div class="col-md-3">
-                  <div class="card text-center">
-                    <div class="card-body">
-                      <h5 class="card-title">Total Users</h5>
-                      <h2 class="text-primary">{{ users|length }}</h2>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card text-center">
-                    <div class="card-body">
-                      <h5 class="card-title">Pending Subscriptions</h5>
-                      <h2 class="text-warning">
-                        {{ pending_subscriptions|length }}
-                      </h2>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card text-center">
-                    <div class="card-body">
-                      <h5 class="card-title">Unread Messages</h5>
-                      <h2 class="text-info">
-                        {{ all_messages|selectattr('reply', 'equalto',
-                        None)|list|length }}
-                      </h2>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="card text-center">
-                    <div class="card-body">
-                      <h5 class="card-title">Total Blogs</h5>
-                      <h2 class="text-success">{{ all_blogs|length }}</h2>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Users Tab -->
-            <div class="tab-pane fade" id="users" role="tabpanel">
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
-                <h3>User Management</h3>
+              <li class="nav-item" role="presentation">
                 <button
-                  class="btn btn-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#createUserModal"
+                  class="nav-link active"
+                  id="dashboard-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#dashboard"
+                  type="button"
+                  role="tab"
                 >
-                  <i class="bi bi-plus-circle"></i> Add User
+                  <i class="bi bi-speedometer2"></i> Dashboard
                 </button>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for user in users %}
-                    <tr>
-                      <td>{{ user.id }}</td>
-                      <td>{{ user.username }}</td>
-                      <td>{{ user.email }}</td>
-                      <td>{{ user.role }}</td>
-                      <td>
-                        {% if user.approved == 0 %}
-                        <span class="badge bg-success">Active</span>
-                        {% else %}
-                        <span class="badge bg-danger">Banned</span>
-                        {% endif %}
-                      </td>
-                      <td>
-                        <button
-                          class="btn btn-sm btn-outline-primary btn-edit-user"
-                          data-user-id="{{ user.id }}"
-                          data-username="{{ user.username }}"
-                          data-email="{{ user.email }}"
-                          data-role="{{ user.role }}"
-                          data-approved="{{ user.approved }}"
-                        >
-                          <i class="bi bi-pencil"></i>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-{{ 'warning' if user.approved == 0 else 'secondary' }} btn-toggle-ban"
-                          data-user-id="{{ user.id }}"
-                          data-user-username="{{ user.username }}"
-                        >
-                          <i class="bi bi-{{ 'ban' if user.approved == 0 else 'check-circle' }}"></i>
-                          {{ 'Ban' if user.approved == 0 else 'Unban' }}
-                        </button>
-                        <button
-                          class="btn btn-sm btn-outline-danger btn-delete-user"
-                          data-user-id="{{ user.id }}"
-                        >
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Subscriptions Tab -->
-            <div class="tab-pane fade" id="subscriptions" role="tabpanel">
-              <h3>Subscription Management</h3>
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Activated Date</th>
-                      <th>Expire Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for sub in all_subscriptions %}
-                    <tr>
-                      <td>{{ sub.id }}</td>
-                      <td>{{ sub.username }}</td>
-                      <td>{{ sub.email }}</td>
-                      <td>{{ sub.activated_at or '-' }}</td>
-                      <td>{{ sub.expires_at or '-' }}</td>
-                      <td>
-                        {% if sub.status == 'pending' %}
-                        <span class="badge bg-warning">Pending</span>
-                        {% elif sub.status == 'active' %}
-                        <span class="badge bg-success">Active</span>
-                        {% else %}
-                        <span class="badge bg-danger">Rejected</span>
-                        {% endif %}
-                      </td>
-                      <td>
-                        {% if sub.status == 'pending' %}
-                        <button
-                          class="btn btn-sm btn-success btn-approve-subscription"
-                          data-subscription-id="{{ sub.id }}"
-                        >
-                          <i class="bi bi-check-circle"></i> Approve
-                        </button>
-                        <button
-                          class="btn btn-sm btn-danger btn-reject-subscription"
-                          data-subscription-id="{{ sub.id }}"
-                        >
-                          <i class="bi bi-x-circle"></i> Reject
-                        </button>
-                        {% endif %}
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Expired Subscriptions Tab -->
-            <div class="tab-pane fade" id="expired-subscriptions" role="tabpanel">
-              <h3>Expired Accounts</h3>
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Username</th>
-                      <th>Email</th>
-                      <th>Activated Date</th>
-                      <th>Expired Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for sub in expired_subscriptions %}
-                    <tr>
-                      <td>{{ sub.username }}</td>
-                      <td>{{ sub.email }}</td>
-                      <td>{{ sub.activated_at }}</td>
-                      <td>{{ sub.expires_at }}</td>
-                      <td>
-                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                          <i class="bi bi-envelope"></i> Send Renewal Notice
-                        </button>
-                      </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                      <td colspan="5" class="text-center">No expired subscriptions found.</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Messages Tab -->
-            <div class="tab-pane fade" id="messages" role="tabpanel">
-              <h3>Messages</h3>
-              <div class="accordion" id="messagesAccordion">
-                {% for message in all_messages %}
-                <div class="accordion-item">
-                  <h2 class="accordion-header" id="message{{ message.id }}">
-                    <button
-                      class="accordion-button collapsed"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#collapseMessage{{ message.id }}"
-                    >
-                      <div class="d-flex justify-content-between w-100">
-                        <span
-                          >{{ message.subject }} - {{ message.username }}</span
-                        >
-                        {% if not message.reply %}
-                        <span class="badge bg-primary">New</span>
-                        {% endif %}
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="attendance-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#attendance"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-calendar-check"></i> Attendance
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="users-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#users"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-people"></i> Users
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="subscriptions-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#subscriptions"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-credit-card"></i> Subscriptions
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="pricing-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#pricing"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-tag"></i> Pricing
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="messages-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#messages"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-envelope"></i> Messages
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="blogs-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#blogs"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-journal-text"></i> Blogs
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="qr-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#qr"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-qr-code"></i> QR Codes
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="checkedin-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#checkedin"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-people-fill"></i> Checked-in Users
+                </button>
+              </li>
+            </ul>
+            <div class="tab-content" id="adminTabsContent">
+              <!-- Dashboard Tab -->
+              <div
+                class="tab-pane fade show active content-section"
+                id="dashboard"
+                role="tabpanel"
+              >
+                <div class="row g-3">
+                  <div class="col-6 col-md-3">
+                    <div class="card text-center h-100">
+                      <div
+                        class="card-body d-flex flex-column justify-content-center"
+                      >
+                        <i
+                          class="bi bi-people text-primary mb-2"
+                          style="font-size: 2rem"
+                        ></i>
+                        <h5 class="card-title">Total Users</h5>
+                        <h2 class="text-primary">{{ users|length }}</h2>
                       </div>
-                    </button>
-                  </h2>
-                  <div
-                    id="collapseMessage{{ message.id }}"
-                    class="accordion-collapse collapse"
-                    data-bs-parent="#messagesAccordion"
-                  >
-                    <div class="accordion-body">
-                      <p><strong>From:</strong> {{ message.username }}</p>
-                      <p><strong>Date:</strong> {{ message.created_at }}</p>
-                      <p><strong>Message:</strong> {{ message.message }}</p>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="card text-center h-100">
+                      <div
+                        class="card-body d-flex flex-column justify-content-center"
+                      >
+                        <i
+                          class="bi bi-credit-card text-warning mb-2"
+                          style="font-size: 2rem"
+                        ></i>
+                        <h5 class="card-title">Active</h5>
+                        <h2 class="text-warning">
+                          {{ active_subscriptions|length }}
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="card text-center h-100">
+                      <div
+                        class="card-body d-flex flex-column justify-content-center"
+                      >
+                        <i
+                          class="bi bi-envelope text-info mb-2"
+                          style="font-size: 2rem"
+                        ></i>
+                        <h5 class="card-title">Unread</h5>
+                        <h2 class="text-info">
+                          {{ all_messages|selectattr('reply', 'equalto',
+                          None)|list|length }}
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <div class="card text-center h-100">
+                      <div
+                        class="card-body d-flex flex-column justify-content-center"
+                      >
+                        <i
+                          class="bi bi-journal-text text-success mb-2"
+                          style="font-size: 2rem"
+                        ></i>
+                        <h5 class="card-title">Blogs</h5>
+                        <h2 class="text-success">{{ all_blogs|length }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                      {% if message.reply %}
-                      <div class="card mt-3">
-                        <div class="card-header">Reply</div>
-                        <div class="card-body">
-                          <p>{{ message.reply }}</p>
-                          <p>
-                            <small class="text-muted"
-                              >Replied at: {{ message.replied_at }}</small
+              <!-- Users Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="users"
+                role="tabpanel"
+              >
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">User Management</h3>
+                  <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createUserModal"
+                  >
+                    <i class="bi bi-plus-circle"></i> Add User
+                  </button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for user in users %}
+                      <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role }}</td>
+                        <td>
+                          {% if user.approved == 0 %}
+                          <span class="badge bg-success">Active</span>
+                          {% else %}
+                          <span class="badge bg-danger">Banned</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <div class="btn-group" role="group">
+                            <button
+                              class="btn btn-sm btn-outline-primary btn-edit-user"
+                              data-user-id="{{ user.id }}"
+                              data-username="{{ user.username }}"
+                              data-email="{{ user.email }}"
+                              data-role="{{ user.role }}"
+                              data-approved="{{ user.approved }}"
                             >
-                          </p>
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-{{ 'warning' if user.approved == 0 else 'secondary' }} btn-toggle-ban custom-admin-btn"
+                              data-user-id="{{ user.id }}"
+                              data-user-username="{{ user.username }}"
+                            >
+                              <i
+                                class="bi bi-{{ 'ban' if user.approved == 0 else 'check-circle' }}"
+                              ></i>
+                              {{ 'Ban' if user.approved == 0 else 'Unban' }}
+                            </button>
+                            <button
+                              class="btn btn-sm btn-outline-danger btn-delete-user"
+                              data-user-id="{{ user.id }}"
+                            >
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Subscriptions Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="subscriptions"
+                role="tabpanel"
+              >
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">Subscription Management</h3>
+                  <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createSubscriptionModal"
+                  >
+                    <i class="bi bi-plus-circle"></i> Add Subscription
+                  </button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Type</th>
+                        <th>Details</th>
+                        <th>Price</th>
+                        <th>Activated Date</th>
+                        <th>Expire Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for sub in active_subscriptions %}
+                      <tr>
+                        <td>{{ sub.id }}</td>
+                        <td>{{ sub.username }}</td>
+                        <td>
+                          {% if sub.subscription_type == 'monthly' %}
+                          <span class="badge bg-primary">Monthly</span>
+                          {% else %}
+                          <span class="badge bg-info">Trainer Sessions</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if sub.subscription_type == 'monthly' %} {{
+                          sub.months }} month(s) {% else %} {{
+                          sub.trainer_sessions }} session(s) with {{
+                          sub.trainer_name }} {% endif %}
+                        </td>
+                        <td>{{ sub.price }} MMK</td>
+                        <td>{{ sub.activated_at }}</td>
+                        <td>{{ sub.expires_at or '-' }}</td>
+                        <td>
+                          <span class="badge bg-success">Active</span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Pricing Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="pricing"
+                role="tabpanel"
+              >
+                <h3 class="h4 mb-3">Pricing Management</h3>
+
+                <!-- Monthly Subscription Pricing -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="bi bi-calendar-month"></i> Monthly Subscription
+                    Price
+                  </div>
+                  <div class="card-body">
+                    <div class="row align-items-center">
+                      <div class="col-md-6">
+                        <p class="mb-0">Current monthly subscription price:</p>
+                        <h4>{{ monthly_price }} MMK</h4>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            class="form-control"
+                            id="newMonthlyPrice"
+                            placeholder="Enter new price"
+                            value="{{ monthly_price }}"
+                          />
+                          <span class="input-group-text">MMK</span>
+                          <button
+                            class="btn btn-primary"
+                            id="updateMonthlyPriceBtn"
+                          >
+                            Update
+                          </button>
                         </div>
                       </div>
-                      {% else %}
-                      <div class="mt-3">
-                        <textarea
-                          class="form-control reply-text"
-                          id="replyText{{ message.id }}"
-                          rows="3"
-                          placeholder="Type your reply..."
-                        ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Trainer Session Pricing -->
+                <div class="card">
+                  <div class="card-header">
+                    <i class="bi bi-person-badge"></i> Trainer Session Pricing
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Trainer</th>
+                            <th>Current Price per Session</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for pricing in trainer_pricing %}
+                          <tr>
+                            <td>{{ pricing.username }}</td>
+                            <td>{{ pricing.price_per_session }} MMK</td>
+                            <td>
+                              <div class="input-group">
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="trainerPrice{{ pricing.trainer_id }}"
+                                  placeholder="Enter new price"
+                                  value="{{ pricing.price_per_session }}"
+                                />
+                                <span class="input-group-text">MMK</span>
+                                <button
+                                  class="btn btn-sm btn-primary update-trainer-price-btn"
+                                  data-trainer-id="{{ pricing.trainer_id }}"
+                                >
+                                  Update
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Messages Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="messages"
+                role="tabpanel"
+              >
+                <h3 class="h4 mb-3">Messages</h3>
+                <div class="accordion" id="messagesAccordion">
+                  {% for message in all_messages %}
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="message{{ message.id }}">
+                      <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseMessage{{ message.id }}"
+                      >
+                        <div class="d-flex justify-content-between w-100">
+                          <span
+                            >{{ message.subject }} - {{ message.username
+                            }}</span
+                          >
+                          {% if not message.reply %}
+                          <span class="badge bg-primary">New</span>
+                          {% endif %}
+                        </div>
+                      </button>
+                    </h2>
+                    <div
+                      id="collapseMessage{{ message.id }}"
+                      class="accordion-collapse collapse"
+                      data-bs-parent="#messagesAccordion"
+                    >
+                      <div class="accordion-body">
+                        <p><strong>From:</strong> {{ message.username }}</p>
+                        <p><strong>Date:</strong> {{ message.created_at }}</p>
+                        <p><strong>Message:</strong> {{ message.message }}</p>
+
+                        {% if message.reply %}
+                        <div class="card mt-3">
+                          <div class="card-header">Reply</div>
+                          <div class="card-body">
+                            <p>{{ message.reply }}</p>
+                            <p>
+                              <small class="text-muted"
+                                >Replied at: {{ message.replied_at }}</small
+                              >
+                            </p>
+                          </div>
+                        </div>
+                        {% else %}
+                        <div class="mt-3">
+                          <textarea
+                            class="form-control reply-text"
+                            id="replyText{{ message.id }}"
+                            rows="3"
+                            placeholder="Type your reply..."
+                          ></textarea>
+                          <button
+                            class="btn btn-primary mt-2 btn-reply-message"
+                            data-message-id="{{ message.id }}"
+                          >
+                            <i class="bi bi-send"></i> Send Reply
+                          </button>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Blogs Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="blogs"
+                role="tabpanel"
+              >
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">Blog Management</h3>
+                  <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createBlogModal"
+                  >
+                    <i class="bi bi-plus-circle"></i> Add Blog
+                  </button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for blog in all_blogs %}
+                      <tr>
+                        <td>
+                          {% if blog.image_path %}
+                          <img
+                            src="{{ url_for('static', filename=blog.image_path.replace('static/', '')) }}"
+                            alt="{{ blog.title }}"
+                            style="width: 80px; height: 60px; object-fit: cover"
+                          />
+                          {% else %}
+                          <span class="text-muted">No image</span>
+                          {% endif %}
+                        </td>
+                        <td>{{ blog.title }}</td>
+                        <td>{{ blog.username }}</td>
+                        <td>{{ blog.created_at }}</td>
+                        <td>
+                          <div class="btn-group" role="group">
+                            <button
+                              class="btn btn-sm btn-outline-primary btn-edit-blog"
+                              data-blog-id="{{ blog.id }}"
+                              data-title="{{ blog.title }}"
+                              data-content="{{ blog.content }}"
+                              data-image-path="{{ blog.image_path or '' }}"
+                            >
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-outline-danger btn-delete-blog"
+                              data-blog-id="{{ blog.id }}"
+                            >
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- QR Codes Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="qr"
+                role="tabpanel"
+              >
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">QR Code Management</h3>
+                  <button class="btn btn-primary" id="generateNewQrBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Generate New
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <div class="card">
+                      <div class="card-header">User QR Code</div>
+                      <div class="card-body text-center">
+                        <div id="userQrCode" class="mb-3"></div>
+                        <p class="text-muted small">{{ user_qr }}</p>
                         <button
-                          class="btn btn-primary mt-2 btn-reply-message"
-                          data-message-id="{{ message.id }}"
+                          class="btn btn-primary btn-print-qr"
+                          data-qr-type="user"
+                          data-qr-value="{{ user_qr }}"
                         >
-                          <i class="bi bi-send"></i> Send Reply
+                          <i class="bi bi-printer"></i> Print
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <div class="card">
+                      <div class="card-header">Trainer QR Code</div>
+                      <div class="card-body text-center">
+                        <div id="trainerQrCode" class="mb-3"></div>
+                        <p class="text-muted small">{{ trainer_qr }}</p>
+                        <button
+                          class="btn btn-primary btn-print-qr"
+                          data-qr-type="trainer"
+                          data-qr-value="{{ trainer_qr }}"
+                        >
+                          <i class="bi bi-printer"></i> Print
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Checked-in Users Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="checkedin"
+                role="tabpanel"
+              >
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">Currently Checked-in Users</h3>
+                  <button class="btn btn-primary" id="refreshCheckedInBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                  </button>
+                </div>
+                <div class="card">
+                  <div class="card-body">
+                    <div id="checkedInUsersList">
+                      <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Attendance Records Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="attendance"
+                role="tabpanel"
+              >
+                <div class="card">
+                  <div class="card-header">
+                    <i class="bi bi-calendar-check"></i> Attendance Records
+                  </div>
+                  <div class="card-body">
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label for="attendanceUsername" class="form-label"
+                          >Username</label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="attendanceUsername"
+                          placeholder="Enter username (optional)"
+                        />
+                      </div>
+                      <div class="col-md-3">
+                        <label for="attendanceStartDate" class="form-label"
+                          >Start Date</label
+                        >
+                        <input
+                          type="date"
+                          class="form-control"
+                          id="attendanceStartDate"
+                        />
+                      </div>
+                      <div class="col-md-3">
+                        <label for="attendanceEndDate" class="form-label"
+                          >End Date</label
+                        >
+                        <input
+                          type="date"
+                          class="form-control"
+                          id="attendanceEndDate"
+                        />
+                      </div>
+                      <div class="col-md-2 d-flex align-items-end">
+                        <button
+                          class="btn btn-primary w-100"
+                          id="filterAttendanceBtn"
+                        >
+                          <i class="bi bi-funnel"></i> Filter
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                            <th>Timestamp</th>
+                            <th>Total Check-in Days</th>
+                          </tr>
+                        </thead>
+                        <tbody id="attendanceRecordsList">
+                          <tr>
+                            <td colspan="5" class="text-center">
+                              Use the filters above to search for attendance
+                              records.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settings Tab -->
+              <div
+                class="tab-pane fade content-section"
+                id="settings"
+                role="tabpanel"
+              >
+                <h3 class="h4 mb-3">Settings</h3>
+                <div class="card">
+                  <div class="card-body">
+                    <h5>Account Settings</h5>
+                    <div class="mb-3">
+                      <label for="adminName" class="form-label">Name</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="adminName"
+                        value="{{ user.username }}"
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <label for="adminEmail" class="form-label">Email</label>
+                      <input
+                        type="email"
+                        class="form-control"
+                        id="adminEmail"
+                        value="{{ user.email }}"
+                      />
+                    </div>
+                    <button class="btn btn-primary">Save Changes</button>
+                  </div>
+                </div>
+
+                <div class="card mt-3">
+                  <div class="card-body">
+                    <h5>System Settings</h5>
+                    <div class="mb-3 form-check form-switch">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="emailNotifications"
+                        checked
+                      />
+                      <label class="form-check-label" for="emailNotifications">
+                        Email Notifications
+                      </label>
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="autoApproveSubscriptions"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="autoApproveSubscriptions"
+                      >
+                        Auto-approve Subscriptions
+                      </label>
+                    </div>
+                    <button class="btn btn-primary">Save Settings</button>
+                  </div>
+                </div>
+
+                <div class="card mt-3">
+                  <div class="card-body">
+                    <h5>Backup & Restore</h5>
+                    <p class="text-muted">
+                      Create a backup of your system data or restore from a
+                      previous backup.
+                    </p>
+                    <button class="btn btn-outline-primary me-2">
+                      Create Backup
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                      Restore Backup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <!-- User/Trainer Dashboard -->
+        <div class="row">
+          <div class="col-12">
+            <!-- Announcements Section -->
+            <div class="content-section active" id="announcements">
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-megaphone"></i> Announcements
+                </div>
+                <div class="card-body">
+                  {% if blogs %} {% for blog in blogs %}
+                  <div class="mb-4">
+                    {% if blog.image_path %}
+                    <img
+                      src="{{ url_for('static', filename=blog.image_path.replace('static/', '')) }}"
+                      alt="{{ blog.title }}"
+                      class="img-fluid mb-3 rounded"
+                      style="max-height: 300px; object-fit: cover; width: 100%"
+                    />
+                    {% endif %}
+                    <h5>{{ blog.title }}</h5>
+                    <p>{{ blog.content }}</p>
+                    <small class="text-muted"
+                      >Posted on: {{ blog.created_at }}</small
+                    >
+                    {% if not loop.last %}
+                    <hr />
+                    {% endif %}
+                  </div>
+                  {% endfor %} {% else %}
+                  <p>No announcements available.</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Check-in/Check-out Section -->
+            <div class="content-section" id="checkin">
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-qr-code-scan"></i> Check-in / Check-out
+                </div>
+                <div class="card-body">
+                  {% if check_logs %} {% if check_logs[0].check_type == 'in' %}
+                  <div class="check-status checked-in">
+                    <i class="bi bi-check-circle-fill"></i> Currently Checked In
+                  </div>
+                  {% else %}
+                  <div class="check-status checked-out">
+                    <i class="bi bi-x-circle-fill"></i> Currently Checked Out
+                  </div>
+                  {% endif %} {% else %}
+                  <div class="check-status checked-out">
+                    <i class="bi bi-x-circle-fill"></i> Currently Checked Out
+                  </div>
+                  {% endif %}
+
+                  <button
+                    class="btn btn-primary check-in-out-btn w-100"
+                    id="startQRScannerBtn"
+                  >
+                    <i class="bi bi-qr-code-scan"></i> Scan QR Code
+                  </button>
+
+                  <div
+                    id="qr-reader"
+                    class="qr-scanner mt-3"
+                    style="display: none"
+                  ></div>
+
+                  <div class="mt-4">
+                    <h6>Recent Activity:</h6>
+                    {% if check_logs %}
+                    <div class="list-group">
+                      {% for log in check_logs %}
+                      <div
+                        class="list-group-item d-flex justify-content-between align-items-center"
+                      >
+                        <span>
+                          <i
+                            class="bi bi-{{ 'box-arrow-in-right text-success' if log.check_type == 'in' else 'box-arrow-right text-danger' }}"
+                          ></i>
+                          Check-{{ log.check_type }}
+                        </span>
+                        <small class="text-muted">{{ log.timestamp }}</small>
+                      </div>
+                      {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No check-in/out history yet.</p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Messages Section -->
+            <div class="content-section" id="messages">
+              <div class="card">
+                <div
+                  class="card-header d-flex justify-content-between align-items-center"
+                >
+                  <span><i class="bi bi-envelope"></i> Messages</span>
+                  <button
+                    class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#sendMessageModal"
+                  >
+                    <i class="bi bi-plus-circle"></i> Send Message
+                  </button>
+                </div>
+                <div class="card-body">
+                  {% if messages %} {% for message in messages %}
+                  <div class="card mb-3">
+                    <div class="card-body">
+                      <h6 class="card-title">{{ message.subject }}</h6>
+                      <p class="card-text">{{ message.message }}</p>
+                      <small class="text-muted"
+                        >Sent on: {{ message.created_at }}</small
+                      >
+
+                      {% if message.reply %}
+                      <div class="mt-3 p-3 bg-light rounded">
+                        <h6>Reply:</h6>
+                        <p class="mb-1">{{ message.reply }}</p>
+                        <small class="text-muted"
+                          >Replied on: {{ message.replied_at }}</small
+                        >
                       </div>
                       {% endif %}
                     </div>
                   </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <!-- Blogs Tab -->
-            <div class="tab-pane fade" id="blogs" role="tabpanel">
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
-                <h3>Blog Management</h3>
-                <button
-                  class="btn btn-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#createBlogModal"
-                >
-                  <i class="bi bi-plus-circle"></i> Add Blog
-                </button>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Image</th>
-                      <th>Title</th>
-                      <th>Author</th>
-                      <th>Created At</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for blog in all_blogs %}
-                    <tr>
-                      <td>
-                        {% if blog.image_path %}
-                        <img
-                          src="{{ url_for('static', filename=blog.image_path.replace('static/', '')) }}"
-                          alt="{{ blog.title }}"
-                          style="width: 100px; height: auto; object-fit: cover"
-                        />
-                        {% else %}
-                        <span class="text-muted">No image</span>
-                        {% endif %}
-                      </td>
-                      <td>{{ blog.title }}</td>
-                      <td>{{ blog.username }}</td>
-                      <td>{{ blog.created_at }}</td>
-                      <td>
-                        <button
-                          class="btn btn-sm btn-outline-primary btn-edit-blog"
-                          data-blog-id="{{ blog.id }}"
-                          data-title="{{ blog.title }}"
-                          data-content="{{ blog.content }}"
-                          data-image-path="{{ blog.image_path or '' }}"
-                        >
-                          <i class="bi bi-pencil"></i>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-outline-danger btn-delete-blog"
-                          data-blog-id="{{ blog.id }}"
-                        >
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- QR Codes Tab -->
-            <div class="tab-pane fade" id="qr" role="tabpanel">
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
-                <h3>QR Code Management</h3>
-                <button class="btn btn-primary" id="generateNewQrBtn">
-                  <i class="bi bi-arrow-clockwise"></i> Generate New QR Codes
-                </button>
-              </div>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="card">
-                    <div class="card-header">User QR Code</div>
-                    <div class="card-body text-center">
-                      <div id="userQrCode" class="mb-3"></div>
-                      <p class="text-muted">{{ user_qr }}</p>
-                      <button
-                        class="btn btn-primary btn-print-qr"
-                        data-qr-type="user"
-                        data-qr-value="{{ user_qr }}"
-                      >
-                        <i class="bi bi-printer"></i> Print
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="card">
-                    <div class="card-header">Trainer QR Code</div>
-                    <div class="card-body text-center">
-                      <div id="trainerQrCode" class="mb-3"></div>
-                      <p class="text-muted">{{ trainer_qr }}</p>
-                      <button
-                        class="btn btn-primary btn-print-qr"
-                        data-qr-type="trainer"
-                        data-qr-value="{{ trainer_qr }}"
-                      >
-                        <i class="bi bi-printer"></i> Print
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Checked-in Users Tab -->
-            <div class="tab-pane fade" id="checkedin" role="tabpanel">
-              <div
-                class="d-flex justify-content-between align-items-center mb-3"
-              >
-                <h3>Currently Checked-in Users</h3>
-                <button class="btn btn-primary" id="refreshCheckedInBtn">
-                  <i class="bi bi-arrow-clockwise"></i> Refresh
-                </button>
-              </div>
-              <div class="card">
-                <div class="card-body">
-                  <div id="checkedInUsersList">
-                    <div class="text-center">
-                      <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% else %}
-      <!-- User/Trainer Dashboard -->
-      <div class="row">
-        <div class="col-lg-8">
-          <!-- Announcements/Blogs -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-megaphone"></i> Announcements
-            </div>
-            <div class="card-body">
-              {% if blogs %} {% for blog in blogs %}
-              <div class="mb-4">
-                {% if blog.image_path %}
-                <img
-                  src="{{ url_for('static', filename=blog.image_path.replace('static/', '')) }}"
-                  alt="{{ blog.title }}"
-                  class="img-fluid mb-3"
-                  style="max-height: 400px; object-fit: cover; width: 100%"
-                />
-                {% endif %}
-                <h5>{{ blog.title }}</h5>
-                <p>{{ blog.content }}</p>
-                <small class="text-muted"
-                  >Posted on: {{ blog.created_at }}</small
-                >
-                <hr />
-              </div>
-              {% endfor %} {% else %}
-              <p>No announcements available.</p>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Check-in/Check-out -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-qr-code-scan"></i> Check-in / Check-out
-            </div>
-            <div class="card-body">
-              {% if check_logs %} {% if check_logs[0].check_type == 'in' %}
-              <div class="check-status checked-in">
-                <i class="bi bi-check-circle"></i> Currently Checked In
-              </div>
-              {% else %}
-              <div class="check-status checked-out">
-                <i class="bi bi-x-circle"></i> Currently Checked Out
-              </div>
-              {% endif %} {% else %}
-              <div class="check-status checked-out">
-                <i class="bi bi-x-circle"></i> Currently Checked Out
-              </div>
-              {% endif %}
-
-              <button
-                class="btn btn-primary check-in-out-btn"
-                id="startQRScannerBtn"
-              >
-                <i class="bi bi-qr-code-scan"></i> Scan QR Code
-              </button>
-
-              <div
-                id="qr-reader"
-                class="qr-scanner"
-                style="display: none"
-              ></div>
-
-              <div class="mt-3">
-                <h6>Recent Check-ins/Check-outs:</h6>
-                {% if check_logs %}
-                <ul class="list-group">
-                  {% for log in check_logs %}
-                  <li
-                    class="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    <span>
-                      <i
-                        class="bi bi-{{ 'box-arrow-in-right' if log.check_type == 'in' else 'box-arrow-right' }}"
-                      ></i>
-                      Check-{{ log.check_type }}
-                    </span>
-                    <small>{{ log.timestamp }}</small>
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted">No check-in/out history yet.</p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-lg-4">
-          <!-- Messages -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-envelope"></i> Messages
-            </div>
-            <div class="card-body">
-              <button
-                class="btn btn-primary mb-3"
-                data-bs-toggle="modal"
-                data-bs-target="#sendMessageModal"
-              >
-                <i class="bi bi-plus-circle"></i> Send Message
-              </button>
-
-              {% if messages %} {% for message in messages %}
-              <div class="card mb-3">
-                <div class="card-body">
-                  <h5>{{ message.subject }}</h5>
-                  <p>{{ message.message }}</p>
-                  <small class="text-muted"
-                    >Sent on: {{ message.created_at }}</small
-                  >
-
-                  {% if message.reply %}
-                  <div class="mt-3 p-3 bg-light rounded">
-                    <h6>Reply:</h6>
-                    <p>{{ message.reply }}</p>
-                    <small class="text-muted"
-                      >Replied on: {{ message.replied_at }}</small
-                    >
-                  </div>
+                  {% endfor %} {% else %}
+                  <p>No messages sent yet.</p>
                   {% endif %}
                 </div>
               </div>
-              {% endfor %} {% else %}
-              <p>No messages sent yet.</p>
-              {% endif %}
             </div>
-          </div>
-          <!-- Subscription Status -->
-          <div class="card">
-            <div class="card-header">
-              <i class="bi bi-credit-card"></i> Subscription
-            </div>
-            <div class="card-body">
-              {% if subscription %}
-                <!-- Check if subscription is expired -->
-                {% if is_expired %}
-                <div class="subscription-status expired-subscription">
-                  <i class="bi bi-x-circle"></i> Expired
+
+            <!-- Subscription Section -->
+            <div class="content-section" id="subscription">
+              <!-- Monthly Subscription -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <i class="bi bi-calendar-month"></i> Monthly Subscription
                 </div>
-                <p><strong>Plan:</strong> Monthly</p>
-                <p><strong>Status:</strong> Expired on {{ subscription.expires_at }}</p>
-                <p class="text-muted">
-                  Your subscription has expired. Please renew to continue.
-                </p>
-                <button
-                  class="btn btn-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#subscriptionModal"
-                >
-                  <i class="bi bi-arrow-clockwise"></i> Renew Now
-                </button>
-                {% elif subscription.status == 'active' %}
-                <div class="subscription-status active-subscription">
-                  <i class="bi bi-check-circle"></i> Active
+                <div class="card-body">
+                  {% if monthly_subscription %} {% if is_monthly_expired %}
+                  <div class="subscription-status expired-subscription">
+                    <i class="bi bi-x-circle-fill"></i> Expired
+                  </div>
+                  <p>
+                    <strong>Plan:</strong> {{ monthly_subscription.months }}
+                    Month(s)
+                  </p>
+                  <p>
+                    <strong>Status:</strong> Expired on {{
+                    monthly_subscription.expires_at }}
+                  </p>
+                  <p class="text-muted small">
+                    Your monthly subscription has expired. Please contact admin
+                    to renew.
+                  </p>
+                  {% else %}
+                  <div class="subscription-status active-subscription">
+                    <i class="bi bi-check-circle-fill"></i> Active
+                  </div>
+                  <p>
+                    <strong>Plan:</strong> {{ monthly_subscription.months }}
+                    Month(s)
+                  </p>
+                  <p>
+                    <strong>Activated:</strong> {{
+                    monthly_subscription.activated_at }}
+                  </p>
+                  <p>
+                    <strong>Expires:</strong> {{ monthly_subscription.expires_at
+                    }}
+                  </p>
+                  {% endif %} {% else %}
+                  <div class="subscription-status no-subscription">
+                    <i class="bi bi-x-circle-fill"></i> No Active Subscription
+                  </div>
+                  <p class="text-muted small">
+                    You don't have an active monthly subscription. Please
+                    contact admin to subscribe.
+                  </p>
+                  {% endif %}
                 </div>
-                <p><strong>Plan:</strong> Monthly</p>
-                <p><strong>Activated on:</strong> {{ subscription.activated_at }}</p>
-                <p><strong>Expires on:</strong> {{ subscription.expires_at }}</p>
-                {% else %}
-                <div class="subscription-status pending-subscription">
-                  <i class="bi bi-clock"></i> Pending Approval
-                </div>
-                <p><strong>Plan:</strong> Monthly</p>
-                <p><strong>Status:</strong> Pending</p>
-                <p class="text-muted">
-                  Your subscription is pending approval from the admin.
-                </p>
-                {% endif %}
-              {% else %}
-              <div class="subscription-status no-subscription">
-                <i class="bi bi-x-circle"></i> No Active Subscription
               </div>
-              <p>You don't have an active subscription.</p>
-              <button
-                class="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#subscriptionModal"
-              >
-                <i class="bi bi-plus-circle"></i> Subscribe Now
-              </button>
-              {% endif %}
+
+              <!-- Trainer Sessions -->
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-person-badge"></i> Trainer Sessions
+                </div>
+                <div class="card-body">
+                  {% if trainer_subscriptions %} {% for sub in
+                  trainer_subscriptions %}
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-2"
+                  >
+                    <div>
+                      <strong>{{ sub.trainer_name }}</strong>
+                      <span class="badge bg-info ms-2"
+                        >{{ sub.trainer_sessions }} sessions</span
+                      >
+                    </div>
+                    <button
+                      class="btn btn-sm btn-outline-primary use-session-btn"
+                      data-trainer-id="{{ sub.trainer_id }}"
+                      data-trainer-name="{{ sub.trainer_name }}"
+                    >
+                      Use Session
+                    </button>
+                  </div>
+                  {% endfor %} {% else %}
+                  <p class="text-muted">
+                    You don't have any trainer sessions. Please contact admin to
+                    purchase sessions.
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="content-section" id="settings">
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-gear"></i> Settings
+                </div>
+                <div class="card-body">
+                  <h5>Account Settings</h5>
+                  <div class="mb-3">
+                    <label for="userName" class="form-label">Username</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="userName"
+                      value="{{ user.username }}"
+                      readonly
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="userEmail" class="form-label">Email</label>
+                    <input
+                      type="email"
+                      class="form-control"
+                      id="userEmail"
+                      value="{{ user.email }}"
+                      readonly
+                    />
+                  </div>
+                  <div class="mb-3">
+                    <label for="userRole" class="form-label">Role</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="userRole"
+                      value="{{ role }}"
+                      readonly
+                    />
+                  </div>
+
+                  <hr class="my-4" />
+
+                  <h5>App Settings</h5>
+                  <div class="mb-3 form-check form-switch">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="pushNotifications"
+                      checked
+                    />
+                    <label class="form-check-label" for="pushNotifications">
+                      Push Notifications
+                    </label>
+                  </div>
+                  <div class="mb-3 form-check form-switch">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="emailNotifications"
+                      checked
+                    />
+                    <label class="form-check-label" for="emailNotifications">
+                      Email Notifications
+                    </label>
+                  </div>
+                  <button class="btn btn-primary">Save Settings</button>
+                  <hr class="my-4" />
+
+                  <a href="/logout" class="btn btn-danger w-100">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
 
     <!-- Modals -->
@@ -916,6 +1678,7 @@
                   type="text"
                   class="form-control"
                   id="username"
+                  name="username"
                   required
                 />
               </div>
@@ -925,16 +1688,23 @@
                   type="password"
                   class="form-control"
                   id="password"
+                  name="password"
                   required
                 />
               </div>
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" required />
+                <input
+                  type="email"
+                  class="form-control"
+                  id="email"
+                  name="email"
+                  required
+                />
               </div>
               <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
-                <select class="form-select" id="role" required>
+                <select class="form-select" id="role" name="role" required>
                   <option value="user">User</option>
                   <option value="trainer">Trainer</option>
                   <option value="admin">Admin</option>
@@ -945,6 +1715,7 @@
                   type="checkbox"
                   class="form-check-input"
                   id="approved"
+                  name="approved"
                   checked
                 />
                 <label class="form-check-label" for="approved">Active</label>
@@ -981,13 +1752,14 @@
           </div>
           <div class="modal-body">
             <form id="editUserForm">
-              <input type="hidden" id="editUserId" />
+              <input type="hidden" id="editUserId" name="user_id" />
               <div class="mb-3">
                 <label for="editUsername" class="form-label">Username</label>
                 <input
                   type="text"
                   class="form-control"
                   id="editUsername"
+                  name="username"
                   required
                 />
               </div>
@@ -995,7 +1767,12 @@
                 <label for="editPassword" class="form-label"
                   >Password (leave blank to keep current)</label
                 >
-                <input type="password" class="form-control" id="editPassword" />
+                <input
+                  type="password"
+                  class="form-control"
+                  id="editPassword"
+                  name="password"
+                />
               </div>
               <div class="mb-3">
                 <label for="editEmail" class="form-label">Email</label>
@@ -1003,12 +1780,13 @@
                   type="email"
                   class="form-control"
                   id="editEmail"
+                  name="email"
                   required
                 />
               </div>
               <div class="mb-3">
                 <label for="editRole" class="form-label">Role</label>
-                <select class="form-select" id="editRole" required>
+                <select class="form-select" id="editRole" name="role" required>
                   <option value="user">User</option>
                   <option value="trainer">Trainer</option>
                   <option value="admin">Admin</option>
@@ -1019,8 +1797,11 @@
                   type="checkbox"
                   class="form-check-input"
                   id="editApproved"
+                  name="approved"
                 />
-                <label class="form-check-label" for="editApproved">Active</label>
+                <label class="form-check-label" for="editApproved"
+                  >Active</label
+                >
               </div>
             </form>
           </div>
@@ -1179,6 +1960,145 @@
       </div>
     </div>
 
+    <!-- Create Subscription Modal -->
+    <div class="modal fade" id="createSubscriptionModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Subscription</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="createSubscriptionForm">
+              <div class="mb-3">
+                <label for="subscriptionUser" class="form-label">User</label>
+                <select
+                  class="form-select"
+                  id="subscriptionUser"
+                  name="user_id"
+                  required
+                >
+                  <option value="">Select User</option>
+                  {% for user in users %} {% if user.role != 'admin' %}
+                  <option value="{{ user.id }}">
+                    {{ user.username }} ({{ user.email }})
+                  </option>
+                  {% endif %} {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="subscriptionType" class="form-label"
+                  >Subscription Type</label
+                >
+                <select
+                  class="form-select"
+                  id="subscriptionType"
+                  name="subscription_type"
+                  required
+                >
+                  <option value="">Select Type</option>
+                  <option value="monthly">Monthly Subscription</option>
+                  <option value="trainer_sessions">Trainer Sessions</option>
+                </select>
+              </div>
+
+              <!-- Monthly Subscription Options -->
+              <div
+                id="monthlyOptions"
+                class="subscription-options"
+                style="display: none"
+              >
+                <div class="mb-3">
+                  <label for="subscriptionMonths" class="form-label"
+                    >Number of Months</label
+                  >
+                  <select
+                    class="form-select"
+                    id="subscriptionMonths"
+                    name="months"
+                  >
+                    <option value="1">1 Month</option>
+                    <option value="2">2 Months</option>
+                    <option value="3">3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                  </select>
+                </div>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle"></i> Price:
+                  <span id="monthlyPriceDisplay">{{ monthly_price }}</span> MMK
+                  per month
+                </div>
+              </div>
+
+              <!-- Trainer Sessions Options -->
+              <div
+                id="trainerOptions"
+                class="subscription-options"
+                style="display: none"
+              >
+                <div class="mb-3">
+                  <label for="subscriptionTrainer" class="form-label"
+                    >Trainer</label
+                  >
+                  <select
+                    class="form-select"
+                    id="subscriptionTrainer"
+                    name="trainer_id"
+                  >
+                    <option value="">Select Trainer</option>
+                    {% for trainer in trainers %}
+                    <option value="{{ trainer.id }}">
+                      {{ trainer.username }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="subscriptionSessions" class="form-label"
+                    >Number of Sessions</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="subscriptionSessions"
+                    name="sessions"
+                    min="1"
+                    value="1"
+                  />
+                </div>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle"></i> Price per session will be
+                  calculated based on trainer's rate
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="createSubscriptionBtn"
+            >
+              Add Subscription
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Send Message Modal -->
     <div class="modal fade" id="sendMessageModal" tabindex="-1">
       <div class="modal-dialog">
@@ -1230,57 +2150,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Subscription Modal -->
-    <div class="modal fade" id="subscriptionModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Subscribe to Gym</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <h6>Subscription Plan</h6>
-            <p><strong>Monthly Membership - 50,000 MMK</strong></p>
-            <p class="text-muted">Access the gym for one month from the date of activation.</p>
-
-            <div class="mt-4">
-              <h6>Payment Method</h6>
-              <p>Please scan the KPay QR code below to complete your payment:</p>
-              <div class="kpay-qr-placeholder bg-light p-3 text-center">
-                <i class="bi bi-qr-code" style="font-size: 5rem"></i>
-                <p class="mt-2">KPay QR Code</p>
-              </div>
-              <p class="text-center mt-2">
-                After payment, click "Done" to submit your subscription for
-                approval.
-              </p>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="submitSubscriptionBtn"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Refresh Button -->
     <button class="btn btn-primary refresh-btn" onclick="location.reload()">
       <i class="bi bi-arrow-clockwise"></i>
@@ -1296,6 +2165,51 @@
         const userRole = "{{ role }}";
         const userQrValue = "{{ user_qr }}";
         const trainerQrValue = "{{ trainer_qr }}";
+
+        // Mobile Top Bar Title Update
+        const mobileTopBarTitle = document.getElementById("mobileTopBarTitle");
+
+        // Bottom Navigation
+        document
+          .querySelectorAll(".bottom-nav-item[data-tab]")
+          .forEach((item) => {
+            item.addEventListener("click", function (e) {
+              e.preventDefault();
+              const tabName = this.dataset.tab;
+
+              // Hide all sections
+              document
+                .querySelectorAll(".content-section")
+                .forEach((section) => {
+                  section.classList.remove("active");
+                });
+
+              // Show selected section
+              const targetSection = document.getElementById(tabName);
+              if (targetSection) {
+                targetSection.classList.add("active");
+              }
+
+              // Update active states
+              document
+                .querySelectorAll(".bottom-nav-item")
+                .forEach((navItem) => {
+                  navItem.classList.remove("active");
+                });
+              this.classList.add("active");
+
+              // Update mobile top bar title
+              if (mobileTopBarTitle) {
+                const titleText = this.querySelector("span").textContent;
+                mobileTopBarTitle.textContent = titleText;
+              }
+
+              // Load checked-in users if that tab is selected
+              if (tabName === "checkedin" && userRole === "admin") {
+                loadCheckedInUsers();
+              }
+            });
+          });
 
         // Generate QR codes for admin
         if (userRole === "admin" && typeof QRCode !== "undefined") {
@@ -1378,16 +2292,17 @@
               alert("Unable to access camera. Please check permissions.");
             });
         }
-        // Add these functions to handle image preview
+
+        // Image preview functions
         function previewImage(input, previewContainer) {
           if (input.files && input.files[0]) {
             const reader = new FileReader();
 
             reader.onload = function (e) {
               previewContainer.innerHTML = `
-                            <img src="${e.target.result}" alt="Preview" class="img-thumbnail mt-2" style="max-width: 100%; max-height: 300px;">
-                            <div class="form-text mt-1">Image preview (will be resized to 1200x627 pixels)</div>
-                        `;
+                <img src="${e.target.result}" alt="Preview" class="img-thumbnail mt-2" style="max-width: 100%; max-height: 300px;">
+                <div class="form-text mt-1">Image preview (will be resized to 1200x627 pixels)</div>
+              `;
             };
 
             reader.readAsDataURL(input.files[0]);
@@ -1397,20 +2312,22 @@
         }
 
         // Add event listeners for image preview
-        document
-          .getElementById("blogImage")
-          .addEventListener("change", function () {
+        const blogImageInput = document.getElementById("blogImage");
+        if (blogImageInput) {
+          blogImageInput.addEventListener("change", function () {
             previewImage(this, document.getElementById("imagePreview"));
           });
+        }
 
-        document
-          .getElementById("editBlogImage")
-          .addEventListener("change", function () {
+        const editBlogImageInput = document.getElementById("editBlogImage");
+        if (editBlogImageInput) {
+          editBlogImageInput.addEventListener("change", function () {
             previewImage(this, document.getElementById("editImagePreview"));
           });
+        }
+
         // Load checked-in users (only for admin)
         function loadCheckedInUsers() {
-          // Only proceed if we're on admin page
           if (userRole === "admin") {
             fetch("/get-checked-in-users")
               .then((response) => response.json())
@@ -1436,18 +2353,14 @@
                       ).toLocaleString();
 
                       html += `
-                                                <tr>
-                                                    <td>${roleIcon} ${
-                        user.username
-                      }</td>
-                                                    <td><span class="badge bg-${
-                                                      user.role === "trainer"
-                                                        ? "info"
-                                                        : "secondary"
-                                                    }">${user.role}</span></td>
-                                                    <td>${checkInTime}</td>
-                                                </tr>
-                                            `;
+                        <tr>
+                          <td>${roleIcon} ${user.username}</td>
+                          <td><span class="badge bg-${
+                            user.role === "trainer" ? "info" : "secondary"
+                          }">${user.role}</span></td>
+                          <td>${checkInTime}</td>
+                        </tr>
+                      `;
                     });
 
                     html += "</tbody></table></div>";
@@ -1469,11 +2382,12 @@
         // Only set up event listeners if we're on admin page
         if (userRole === "admin") {
           // Load checked-in users when checked-in tab is shown
-          document
-            .getElementById("checkedin-tab")
-            .addEventListener("shown.bs.tab", function () {
+          const checkedinTab = document.getElementById("checkedin-tab");
+          if (checkedinTab) {
+            checkedinTab.addEventListener("shown.bs.tab", function () {
               loadCheckedInUsers();
             });
+          }
 
           // Refresh button click handler
           const refreshBtn = document.getElementById("refreshCheckedInBtn");
@@ -1491,44 +2405,45 @@
         }
 
         // User Management Functions
-        document
-          .getElementById("createUserBtn")
-          .addEventListener("click", function () {
+        const createUserBtn = document.getElementById("createUserBtn");
+        if (createUserBtn) {
+          createUserBtn.addEventListener("click", function () {
             const form = document.getElementById("createUserForm");
             const formData = new FormData(form);
-            // 'approved' in form now means 'active'. Inverted logic for backend.
-            const isActive = formData.get('approved') ? 0 : 1;
+            const isActive = formData.get("approved") ? 0 : 1;
             const data = new URLSearchParams({
-                username: formData.get('username'),
-                password: formData.get('password'),
-                email: formData.get('email'),
-                role: formData.get('role'),
-                approved: isActive // Send 0 for active, 1 for banned
+              username: formData.get("username"),
+              password: formData.get("password"),
+              email: formData.get("email"),
+              role: formData.get("role"),
+              approved: isActive,
             });
 
             fetch("/create-user", { method: "POST", body: data })
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
-                if (data.success)
+                if (data.success) {
                   bootstrap.Modal.getInstance(
                     document.getElementById("createUserModal")
                   ).hide();
-                if (data.success) location.reload();
+                  location.reload();
+                }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 alert("An error occurred while creating user");
               });
           });
+        }
 
+        // Edit User
         document.querySelectorAll(".btn-edit-user").forEach((button) => {
           button.addEventListener("click", function () {
             const userId = this.dataset.userId;
             const username = this.dataset.username;
             const email = this.dataset.email;
             const role = this.dataset.role;
-            // Inverted logic: approved=0 means active, so checkbox should be checked.
             const isActive = this.dataset.approved == "0";
 
             document.getElementById("editUserId").value = userId;
@@ -1543,39 +2458,45 @@
           });
         });
 
-        document
-          .getElementById("updateUserBtn")
-          .addEventListener("click", function () {
+        const updateUserBtn = document.getElementById("updateUserBtn");
+        if (updateUserBtn) {
+          updateUserBtn.addEventListener("click", function () {
             const form = document.getElementById("editUserForm");
             const formData = new FormData(form);
-            // 'approved' in form now means 'active'. Inverted logic for backend.
-            const isActive = formData.get('approved') ? 0 : 1;
+            const userId = document.getElementById("editUserId").value;
+            const isActive = formData.get("approved") ? 0 : 1;
             const data = new URLSearchParams({
-                user_id: formData.get('user_id'),
-                username: formData.get('username'),
-                password: formData.get('password'),
-                email: formData.get('email'),
-                role: formData.get('role'),
-                approved: isActive // Send 0 for active, 1 for banned
+              user_id: formData.get("user_id"),
+              username: formData.get("username"),
+              password: formData.get("password"),
+              email: formData.get("email"),
+              role: formData.get("role"),
+              approved: isActive,
             });
 
-            fetch("/edit-user", { method: "POST", body: data })
+            fetch("/edit-user", {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: data,
+            })
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
-                if (data.success)
+                if (data.success) {
                   bootstrap.Modal.getInstance(
                     document.getElementById("editUserModal")
                   ).hide();
-                if (data.success) location.reload();
+                  location.reload();
+                }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 alert("An error occurred while updating user");
               });
           });
+        }
 
-        // New Ban/Unban functionality
+        // Ban/Unban functionality
         document.addEventListener("click", function (e) {
           if (e.target.closest(".btn-toggle-ban")) {
             e.preventDefault();
@@ -1589,7 +2510,9 @@
             if (confirm(confirmationMessage)) {
               fetch("/toggle-ban-user", {
                 method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
                 body: `user_id=${encodeURIComponent(userId)}`,
               })
                 .then((response) => response.json())
@@ -1601,18 +2524,24 @@
                 })
                 .catch((error) => {
                   console.error("Error:", error);
-                  alert(`An error occurred while trying to ${action} the user.`);
+                  alert(
+                    `An error occurred while trying to ${action} the user.`
+                  );
                 });
             }
           }
         });
 
+        // Delete User
         document.querySelectorAll(".btn-delete-user").forEach((button) => {
           button.addEventListener("click", function () {
             if (confirm("Are you sure you want to delete this user?")) {
               const userId = this.dataset.userId;
               fetch("/delete-user", {
                 method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
                 body: `user_id=${encodeURIComponent(userId)}`,
               })
                 .then((response) => response.json())
@@ -1627,6 +2556,7 @@
             }
           });
         });
+
         // Send message to admin
         const sendMessageBtn = document.getElementById("sendMessageBtn");
         if (sendMessageBtn) {
@@ -1656,37 +2586,164 @@
           });
         }
 
-        // Subscription Functions
-        document
-          .getElementById("submitSubscriptionBtn")
-          .addEventListener("click", function () {
-            // Plan is now fixed on the backend, no need to send it from frontend.
-            const data = new URLSearchParams({ plan: "monthly" });
+        // Subscription Type Selection
+        const subscriptionTypeSelect =
+          document.getElementById("subscriptionType");
+        if (subscriptionTypeSelect) {
+          subscriptionTypeSelect.addEventListener("change", function () {
+            const monthlyOptions = document.getElementById("monthlyOptions");
+            const trainerOptions = document.getElementById("trainerOptions");
 
-            fetch("/create-subscription", { method: "POST", body: data })
+            // Hide all options
+            monthlyOptions.style.display = "none";
+            trainerOptions.style.display = "none";
+
+            // Show selected option
+            if (this.value === "monthly") {
+              monthlyOptions.style.display = "block";
+            } else if (this.value === "trainer_sessions") {
+              trainerOptions.style.display = "block";
+            }
+          });
+        }
+
+        // Create Subscription
+        const createSubscriptionBtn = document.getElementById(
+          "createSubscriptionBtn"
+        );
+        if (createSubscriptionBtn) {
+          createSubscriptionBtn.addEventListener("click", function () {
+            const form = document.getElementById("createSubscriptionForm");
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData);
+
+            fetch("/create-user-subscription", { method: "POST", body: data })
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
-                if (data.success)
+                if (data.success) {
                   bootstrap.Modal.getInstance(
-                    document.getElementById("subscriptionModal")
+                    document.getElementById("createSubscriptionModal")
                   ).hide();
-                if (data.success) location.reload();
+                  location.reload();
+                }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 alert("An error occurred while creating subscription");
               });
           });
+        }
+
+        // Update Monthly Price
+        const updateMonthlyPriceBtn = document.getElementById(
+          "updateMonthlyPriceBtn"
+        );
+        if (updateMonthlyPriceBtn) {
+          updateMonthlyPriceBtn.addEventListener("click", function () {
+            const price = document.getElementById("newMonthlyPrice").value;
+
+            if (!price) {
+              alert("Please enter a valid price");
+              return;
+            }
+
+            const data = new URLSearchParams({ price: price });
+
+            fetch("/update-monthly-price", { method: "POST", body: data })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                  location.reload();
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while updating price");
+              });
+          });
+        }
+
+        // Update Trainer Price
+        document
+          .querySelectorAll(".update-trainer-price-btn")
+          .forEach((button) => {
+            button.addEventListener("click", function () {
+              const trainerId = this.dataset.trainerId;
+              const priceInput = document.getElementById(
+                `trainerPrice${trainerId}`
+              );
+              const price = priceInput.value;
+
+              if (!price) {
+                alert("Please enter a valid price");
+                return;
+              }
+
+              const data = new URLSearchParams({
+                trainer_id: trainerId,
+                price: price,
+              });
+
+              fetch("/update-trainer-price", { method: "POST", body: data })
+                .then((response) => response.json())
+                .then((data) => {
+                  alert(data.message);
+                  if (data.success) {
+                    location.reload();
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                  alert("An error occurred while updating price");
+                });
+            });
+          });
+
+        // Use Trainer Session
+        document.querySelectorAll(".use-session-btn").forEach((button) => {
+          button.addEventListener("click", function () {
+            const trainerId = this.dataset.trainerId;
+            const trainerName = this.dataset.trainerName;
+
+            if (
+              !confirm(
+                `Are you sure you want to use a session with ${trainerName}?`
+              )
+            ) {
+              return;
+            }
+
+            const data = new URLSearchParams({ trainer_id: trainerId });
+
+            fetch("/use-trainer-session", { method: "POST", body: data })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                  if (data.remaining_sessions <= 0) {
+                    location.reload();
+                  } else {
+                    // Update the button text with remaining sessions
+                    this.textContent = `Use Session (${data.remaining_sessions} left)`;
+                  }
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while using session");
+              });
+          });
+        });
 
         // Generate new QR codes
-        document
-          .getElementById("generateNewQrBtn")
-          .addEventListener("click", function () {
+        const generateNewQrBtn = document.getElementById("generateNewQrBtn");
+        if (generateNewQrBtn) {
+          generateNewQrBtn.addEventListener("click", function () {
             fetch("/generate-qr-codes")
               .then((response) => response.text())
               .then((html) => {
-                // Extract the new QR values from the response
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, "text/html");
                 const newUserQr = doc.querySelector('[data-qr-type="user"]')
@@ -1695,7 +2752,6 @@
                   '[data-qr-type="trainer"]'
                 ).dataset.qrValue;
 
-                // Update the displayed QR codes
                 document.getElementById("userQrCode").innerHTML = "";
                 document.getElementById("trainerQrCode").innerHTML = "";
 
@@ -1710,7 +2766,6 @@
                   height: 200,
                 });
 
-                // Update the displayed values
                 document.querySelector(
                   '[data-qr-type="user"]'
                 ).dataset.qrValue = newUserQr;
@@ -1733,141 +2788,12 @@
                 alert("An error occurred while generating QR codes");
               });
           });
+        }
 
-        // Use event delegation for approve/reject buttons
-        document.addEventListener("click", function (e) {
-          if (e.target.closest(".btn-approve-subscription")) {
-            e.preventDefault(); // Prevent any default behavior
-
-            const button = e.target.closest(".btn-approve-subscription");
-            const subId = button.dataset.subscriptionId;
-
-            if (!subId) {
-              console.error("Subscription ID not found");
-              alert("Error: Subscription ID not found");
-              return;
-            }
-
-            console.log("Approving subscription with ID:", subId);
-
-            fetch("/approve-subscription", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `subscription_id=${encodeURIComponent(subId)}`,
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error("Network response was not ok");
-                }
-                return response.json();
-              })
-              .then((data) => {
-                console.log("Response:", data);
-                alert(data.message);
-                if (data.success) location.reload();
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert(
-                  "An error occurred while approving the subscription: " +
-                    error.message
-                );
-              });
-          }
-
-          if (e.target.closest(".btn-reject-subscription")) {
-            e.preventDefault(); // Prevent any default behavior
-
-            const button = e.target.closest(".btn-reject-subscription");
-            const subId = button.dataset.subscriptionId;
-
-            if (!subId) {
-              console.error("Subscription ID not found");
-              alert("Error: Subscription ID not found");
-              return;
-            }
-
-            if (confirm("Are you sure you want to reject this subscription?")) {
-              console.log("Rejecting subscription with ID:", subId);
-
-              fetch("/reject-subscription", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: `subscription_id=${encodeURIComponent(subId)}`,
-              })
-                .then((response) => {
-                  if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  return response.json();
-                })
-                .then((data) => {
-                  console.log("Response:", data);
-                  alert(data.message);
-                  if (data.success) location.reload();
-                })
-                .catch((error) => {
-                  console.error("Error:", error);
-                  alert(
-                    "An error occurred while rejecting the subscription: " +
-                      error.message
-                  );
-                });
-            }
-          }
-        });
-        // Message Functions
-        document
-          .getElementById("sendMessageBtn")
-          .addEventListener("click", function (e) {
-            e.preventDefault(); // Prevent any default behavior
-
-            // Get form values directly
-            const subject = document.getElementById("messageSubject").value;
-            const message = document.getElementById("messageContent").value;
-
-            // Check if values are empty
-            if (!subject || !message) {
-              alert("Please fill in all fields");
-              return;
-            }
-
-            // Create form data manually
-            const formData = new URLSearchParams();
-            formData.append("subject", subject);
-            formData.append("message", message);
-
-            // Send the request
-            fetch("/send-message", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: formData.toString(),
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                alert(data.message);
-                if (data.success) {
-                  bootstrap.Modal.getInstance(
-                    document.getElementById("sendMessageModal")
-                  ).hide();
-                  location.reload();
-                }
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert("An error occurred while sending message");
-              });
-          });
-
-        // Use event delegation for reply message buttons
+        // Reply to Messages
         document.addEventListener("click", function (e) {
           if (e.target.closest(".btn-reply-message")) {
-            e.preventDefault(); // Prevent any default behavior
-
+            e.preventDefault();
             const button = e.target.closest(".btn-reply-message");
             const messageId = button.dataset.messageId;
             const replyText = document.querySelector(
@@ -1878,8 +2804,6 @@
               alert("Please enter a reply");
               return;
             }
-
-            console.log("Replying to message with ID:", messageId);
 
             fetch("/reply-message", {
               method: "POST",
@@ -1910,9 +2834,9 @@
         });
 
         // Blog Functions
-        document
-          .getElementById("createBlogBtn")
-          .addEventListener("click", function () {
+        const createBlogBtn = document.getElementById("createBlogBtn");
+        if (createBlogBtn) {
+          createBlogBtn.addEventListener("click", function () {
             const form = document.getElementById("createBlogForm");
             const formData = new FormData(form);
 
@@ -1920,18 +2844,21 @@
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
-                if (data.success)
+                if (data.success) {
                   bootstrap.Modal.getInstance(
                     document.getElementById("createBlogModal")
                   ).hide();
-                if (data.success) location.reload();
+                  location.reload();
+                }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 alert("An error occurred while creating blog");
               });
           });
+        }
 
+        // Edit Blog
         document.querySelectorAll(".btn-edit-blog").forEach((button) => {
           button.addEventListener("click", function () {
             const blogId = this.dataset.blogId;
@@ -1948,9 +2875,9 @@
               document.getElementById("editImagePreview");
             if (imagePath) {
               editImagePreview.innerHTML = `
-                            <img src="/${imagePath}" alt="Current image" class="img-thumbnail mt-2" style="max-width: 100%; max-height: 300px;">
-                            <div class="form-text mt-1">Current image. Upload a new one to replace.</div>
-                        `;
+                <img src="/${imagePath}" alt="Current image" class="img-thumbnail mt-2" style="max-width: 100%; max-height: 300px;">
+                <div class="form-text mt-1">Current image. Upload a new one to replace.</div>
+              `;
             } else {
               editImagePreview.innerHTML = "";
             }
@@ -1961,9 +2888,9 @@
           });
         });
 
-        document
-          .getElementById("updateBlogBtn")
-          .addEventListener("click", function () {
+        const updateBlogBtn = document.getElementById("updateBlogBtn");
+        if (updateBlogBtn) {
+          updateBlogBtn.addEventListener("click", function () {
             const form = document.getElementById("editBlogForm");
             const formData = new FormData(form);
 
@@ -1971,18 +2898,21 @@
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
-                if (data.success)
+                if (data.success) {
                   bootstrap.Modal.getInstance(
                     document.getElementById("editBlogModal")
                   ).hide();
-                if (data.success) location.reload();
+                  location.reload();
+                }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 alert("An error occurred while updating blog");
               });
           });
+        }
 
+        // Delete Blog
         document.querySelectorAll(".btn-delete-blog").forEach((button) => {
           button.addEventListener("click", function () {
             if (confirm("Are you sure you want to delete this blog?")) {
@@ -2052,6 +2982,86 @@
             printWindow.document.close();
           });
         });
+        // Filter Attendance Records
+        const filterAttendanceBtn = document.getElementById(
+          "filterAttendanceBtn"
+        );
+        if (filterAttendanceBtn) {
+          filterAttendanceBtn.addEventListener("click", function () {
+            const username =
+              document.getElementById("attendanceUsername").value;
+            const startDate = document.getElementById(
+              "attendanceStartDate"
+            ).value;
+            const endDate = document.getElementById("attendanceEndDate").value;
+
+            const data = new URLSearchParams({
+              username: username,
+              start_date: startDate,
+              end_date: endDate,
+            });
+
+            fetch("/get-attendance-records", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: data,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  const recordsList = document.getElementById(
+                    "attendanceRecordsList"
+                  );
+
+                  if (data.records.length === 0) {
+                    recordsList.innerHTML = `
+            <tr>
+              <td colspan="5" class="text-center">
+                No attendance records found matching the criteria.
+              </td>
+            </tr>
+          `;
+                  } else {
+                    let html = "";
+                    data.records.forEach((record) => {
+                      const actionIcon =
+                        record.check_type === "in"
+                          ? '<i class="bi bi-box-arrow-in-right text-success"></i>'
+                          : '<i class="bi bi-box-arrow-right text-danger"></i>';
+                      const actionText =
+                        record.check_type === "in" ? "Check-in" : "Check-out";
+                      const timestamp = new Date(
+                        record.timestamp
+                      ).toLocaleString();
+
+                      html += `
+                        <tr>
+                          <td>${record.username}</td>
+                          <td><span class="badge bg-${
+                            record.role === "trainer" ? "info" : "secondary"
+                          }">${record.role}</span></td>
+                          <td>${actionIcon} ${actionText}</td>
+                          <td>${timestamp}</td>
+                          <td><span class="badge bg-primary">${
+                            record.checkin_days
+                          } days</span></td>
+                        </tr>
+                      `;
+                    });
+                    recordsList.innerHTML = html;
+                  }
+                } else {
+                  alert(data.message);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while fetching attendance records");
+              });
+          });
+        }
       });
     </script>
   </body>
