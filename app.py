@@ -60,6 +60,8 @@ def parse_datetime(date_string):
 # Database initialization
 def init_db():
     conn = sqlite3.connect('database/gym.db')
+    # Add this line to set the row_factory
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
     # Users table
@@ -206,12 +208,13 @@ def init_db():
     # Admin is created as 'active' by setting approved=0.
     cursor.execute("SELECT * FROM users WHERE role='admin'")
     if not cursor.fetchone():
-        cursor.execute("INSERT INTO users (username, password, email, role, approved) VALUES (?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO users (username, password, email, role, approved) VALUES (?, ?, ?, ?, ?)", 
                       ('admin', 'admin123', 'admin@gym.com', 'admin', 0)) # Set approved to 0 (active)
+                      
     # Check if monthly subscription price is set, if not create default
     cursor.execute("SELECT * FROM system_settings WHERE setting_key='monthly_price'")
     if not cursor.fetchone():
-        cursor.execute("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)",
+        cursor.execute("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)", 
                     ('monthly_price', '50000')) # Default 50,000 MMK
 
     # Initialize trainer pricing for all trainers
@@ -219,7 +222,7 @@ def init_db():
     for trainer in trainers:
         cursor.execute("SELECT * FROM trainer_pricing WHERE trainer_id=?", (trainer['id'],))
         if not cursor.fetchone():
-            cursor.execute("INSERT INTO trainer_pricing (trainer_id, price_per_session) VALUES (?, ?)",
+            cursor.execute("INSERT INTO trainer_pricing (trainer_id, price_per_session) VALUES (?, ?)", 
                         (trainer['id'], 20000)) # Default 20,000 MMK per session
     
     # Check if QR codes exist, if not create them
