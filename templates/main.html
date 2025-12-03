@@ -497,6 +497,10 @@
           <i class="bi bi-people-fill"></i>
           <span>Check-ins</span>
         </a>
+        <a href="#appointments" class="bottom-nav-item" data-tab="appointments">
+          <i class="bi bi-calendar-check"></i>
+          <span>Appointments</span>
+        </a>
         <a href="#attendance" class="bottom-nav-item" data-tab="attendance">
           <i class="bi bi-calendar-check"></i>
           <span>Attendance</span>
@@ -511,6 +515,31 @@
             }}</span
           >
           {% endif %}
+        </a>
+        <a href="#settings" class="bottom-nav-item" data-tab="settings">
+          <i class="bi bi-gear"></i>
+          <span>Settings</span>
+        </a>
+        {% elif role == 'trainer' %}
+        <a
+          href="#announcements"
+          class="bottom-nav-item active"
+          data-tab="announcements"
+        >
+          <i class="bi bi-megaphone"></i>
+          <span>Home</span>
+        </a>
+        <a href="#checkin" class="bottom-nav-item" data-tab="checkin">
+          <i class="bi bi-qr-code-scan"></i>
+          <span>Check-in</span>
+        </a>
+        <a href="#appointments" class="bottom-nav-item" data-tab="appointments">
+          <i class="bi bi-calendar-check"></i>
+          <span>Appointments</span>
+        </a>
+        <a href="#messages" class="bottom-nav-item" data-tab="messages">
+          <i class="bi bi-envelope"></i>
+          <span>Messages</span>
         </a>
         <a href="#settings" class="bottom-nav-item" data-tab="settings">
           <i class="bi bi-gear"></i>
@@ -535,7 +564,7 @@
         </a>
         <a href="#subscription" class="bottom-nav-item" data-tab="subscription">
           <i class="bi bi-credit-card"></i>
-          <span>Plan</span>
+          <span>Subscriptions</span>
         </a>
         <a href="#settings" class="bottom-nav-item" data-tab="settings">
           <i class="bi bi-gear"></i>
@@ -608,13 +637,13 @@
               <li class="nav-item" role="presentation">
                 <button
                   class="nav-link"
-                  id="expired-subscriptions-tab"
+                  id="pricing-tab"
                   data-bs-toggle="tab"
-                  data-bs-target="#expired-subscriptions"
+                  data-bs-target="#pricing"
                   type="button"
                   role="tab"
                 >
-                  <i class="bi bi-x-circle"></i> Expired Accounts
+                  <i class="bi bi-tag"></i> Pricing
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -651,6 +680,18 @@
                   role="tab"
                 >
                   <i class="bi bi-qr-code"></i> QR Codes
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="appointments-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#appointments"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-calendar-check"></i> Appointments
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -694,12 +735,12 @@
                         class="card-body d-flex flex-column justify-content-center"
                       >
                         <i
-                          class="bi bi-clock-history text-warning mb-2"
+                          class="bi bi-credit-card text-warning mb-2"
                           style="font-size: 2rem"
                         ></i>
-                        <h5 class="card-title">Pending</h5>
+                        <h5 class="card-title">Active</h5>
                         <h2 class="text-warning">
-                          {{ pending_subscriptions|length }}
+                          {{ active_subscriptions|length }}
                         </h2>
                       </div>
                     </div>
@@ -810,6 +851,21 @@
                             >
                               <i class="bi bi-trash"></i>
                             </button>
+                            <button
+                              class="btn btn-sm btn-outline-danger btn-delete-user"
+                              data-user-id="{{ user.id }}"
+                            >
+                              <i class="bi bi-trash"></i>
+                            </button>
+                            {% if user.role == 'trainer' %}
+                            <button
+                              class="btn btn-sm btn-outline-info btn-set-trainer-price"
+                              data-trainer-id="{{ user.id }}"
+                              data-trainer-name="{{ user.username }}"
+                            >
+                              <i class="bi bi-tag"></i> Set Price
+                            </button>
+                            {% endif %}
                           </div>
                         </td>
                       </tr>
@@ -825,54 +881,55 @@
                 id="subscriptions"
                 role="tabpanel"
               >
-                <h3 class="h4 mb-3">Subscription Management</h3>
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4">Subscription Management</h3>
+                  <button
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createSubscriptionModal"
+                  >
+                    <i class="bi bi-plus-circle"></i> Add Subscription
+                  </button>
+                </div>
                 <div class="table-responsive">
                   <table class="table table-striped">
                     <thead>
                       <tr>
                         <th>ID</th>
                         <th>Username</th>
-                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Details</th>
+                        <th>Price</th>
                         <th>Activated Date</th>
                         <th>Expire Date</th>
                         <th>Status</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {% for sub in all_subscriptions %}
+                      {% for sub in active_subscriptions %}
                       <tr>
                         <td>{{ sub.id }}</td>
                         <td>{{ sub.username }}</td>
-                        <td>{{ sub.email }}</td>
-                        <td>{{ sub.activated_at or '-' }}</td>
+                        <td>
+                          {% if sub.subscription_type == 'monthly' %}
+                          <span class="badge bg-primary">Monthly</span>
+                          {% else %}
+                          <span class="badge bg-info">Trainer Sessions</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if sub.subscription_type == 'monthly' %} {{
+                          sub.months }} month(s) {% else %} {{
+                          sub.trainer_sessions }} session(s) with {{
+                          sub.trainer_name }} {% endif %}
+                        </td>
+                        <td>{{ sub.price }} MMK</td>
+                        <td>{{ sub.activated_at }}</td>
                         <td>{{ sub.expires_at or '-' }}</td>
                         <td>
-                          {% if sub.status == 'pending' %}
-                          <span class="badge bg-warning">Pending</span>
-                          {% elif sub.status == 'active' %}
                           <span class="badge bg-success">Active</span>
-                          {% else %}
-                          <span class="badge bg-danger">Rejected</span>
-                          {% endif %}
-                        </td>
-                        <td>
-                          {% if sub.status == 'pending' %}
-                          <div class="btn-group" role="group">
-                            <button
-                              class="btn btn-sm btn-success btn-approve-subscription"
-                              data-subscription-id="{{ sub.id }}"
-                            >
-                              <i class="bi bi-check-circle"></i>
-                            </button>
-                            <button
-                              class="btn btn-sm btn-danger btn-reject-subscription"
-                              data-subscription-id="{{ sub.id }}"
-                            >
-                              <i class="bi bi-x-circle"></i>
-                            </button>
-                          </div>
-                          {% endif %}
                         </td>
                       </tr>
                       {% endfor %}
@@ -881,52 +938,94 @@
                 </div>
               </div>
 
-              <!-- Expired Subscriptions Tab -->
+              <!-- Pricing Tab -->
               <div
                 class="tab-pane fade content-section"
-                id="expired-subscriptions"
+                id="pricing"
                 role="tabpanel"
               >
-                <h3 class="h4 mb-3">Expired Accounts</h3>
-                <div class="table-responsive">
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Activated Date</th>
-                        <th>Expired Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for sub in expired_subscriptions %}
-                      <tr>
-                        <td>{{ sub.username }}</td>
-                        <td>{{ sub.email }}</td>
-                        <td>{{ sub.activated_at }}</td>
-                        <td>{{ sub.expires_at }}</td>
-                        <td>
+                <h3 class="h4 mb-3">Pricing Management</h3>
+
+                <!-- Monthly Subscription Pricing -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <i class="bi bi-calendar-month"></i> Monthly Subscription
+                    Price
+                  </div>
+                  <div class="card-body">
+                    <div class="row align-items-center">
+                      <div class="col-md-6">
+                        <p class="mb-0">Current monthly subscription price:</p>
+                        <h4>{{ monthly_price }} MMK</h4>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="input-group">
+                          <input
+                            type="number"
+                            class="form-control"
+                            id="newMonthlyPrice"
+                            placeholder="Enter new price"
+                            value="{{ monthly_price }}"
+                          />
+                          <span class="input-group-text">MMK</span>
                           <button
-                            class="btn btn-sm btn-outline-secondary"
-                            disabled
+                            class="btn btn-primary"
+                            id="updateMonthlyPriceBtn"
                           >
-                            <i class="bi bi-envelope"></i> Send Renewal
+                            Update
                           </button>
-                        </td>
-                      </tr>
-                      {% else %}
-                      <tr>
-                        <td colspan="5" class="text-center">
-                          No expired subscriptions found.
-                        </td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Trainer Session Pricing -->
+                <div class="card">
+                  <div class="card-header">
+                    <i class="bi bi-person-badge"></i> Trainer Session Pricing
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Trainer</th>
+                            <th>Current Price per Session</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for pricing in trainer_pricing %}
+                          <tr>
+                            <td>{{ pricing.username }}</td>
+                            <td>{{ pricing.price_per_session }} MMK</td>
+                            <td>
+                              <div class="input-group">
+                                <input
+                                  type="number"
+                                  class="form-control"
+                                  id="trainerPrice{{ pricing.trainer_id }}"
+                                  placeholder="Enter new price"
+                                  value="{{ pricing.price_per_session }}"
+                                />
+                                <span class="input-group-text">MMK</span>
+                                <button
+                                  class="btn btn-sm btn-primary update-trainer-price-btn"
+                                  data-trainer-id="{{ pricing.trainer_id }}"
+                                >
+                                  Update
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               </div>
-
               <!-- Messages Tab -->
               <div
                 class="tab-pane fade content-section"
@@ -1448,64 +1547,130 @@
               </div>
             </div>
 
-            <!-- Subscription Section -->
-            <div class="content-section" id="subscription">
+            <!-- Appointments Section -->
+            <div class="content-section" id="appointments">
               <div class="card">
                 <div class="card-header">
-                  <i class="bi bi-credit-card"></i> Subscription
+                  <i class="bi bi-calendar-check"></i> Your Appointments
                 </div>
                 <div class="card-body">
-                  {% if subscription %}
-                  <!-- Check if subscription is expired -->
-                  {% if is_expired %}
+                  <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <!-- THIS IS THE KEY FIX -->
+                          {% if role == 'trainer' %}
+                          <th>Client Name</th>
+                          {% else %}
+                          <!-- This 'else' now correctly applies only to 'user' role -->
+                          <th>Trainer Name</th>
+                          {% endif %}
+                          <th>Sessions Purchased</th>
+                          <th>Sessions Completed</th>
+                          <th>Remaining Sessions</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="appointmentsTableBody">
+                        <tr>
+                          <!-- The colspan is now 5 because there are 5 columns for users/trainers -->
+                          <td colspan="5" class="text-center">
+                            <div
+                              class="spinner-border text-primary"
+                              role="status"
+                            >
+                              <span class="visually-hidden">Loading...</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Subscription Section -->
+            <div class="content-section" id="subscription">
+              <!-- Monthly Subscription -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <i class="bi bi-calendar-month"></i> Monthly Subscription
+                </div>
+                <div class="card-body">
+                  {% if monthly_subscription %} {% if is_monthly_expired %}
                   <div class="subscription-status expired-subscription">
                     <i class="bi bi-x-circle-fill"></i> Expired
                   </div>
-                  <p><strong>Plan:</strong> Monthly</p>
+                  <p>
+                    <strong>Plan:</strong> {{ monthly_subscription.months }}
+                    Month(s)
+                  </p>
                   <p>
                     <strong>Status:</strong> Expired on {{
-                    subscription.expires_at }}
+                    monthly_subscription.expires_at }}
                   </p>
                   <p class="text-muted small">
-                    Your subscription has expired. Please renew to continue.
+                    Your monthly subscription has expired. Please contact admin
+                    to renew.
                   </p>
-                  <button
-                    class="btn btn-primary w-100"
-                    data-bs-toggle="modal"
-                    data-bs-target="#subscriptionModal"
-                  >
-                    <i class="bi bi-arrow-clockwise"></i> Renew Now
-                  </button>
-                  {% elif subscription.status == 'active' %}
+                  {% else %}
                   <div class="subscription-status active-subscription">
                     <i class="bi bi-check-circle-fill"></i> Active
                   </div>
-                  <p><strong>Plan:</strong> Monthly</p>
                   <p>
-                    <strong>Activated:</strong> {{ subscription.activated_at }}
+                    <strong>Plan:</strong> {{ monthly_subscription.months }}
+                    Month(s)
                   </p>
-                  <p><strong>Expires:</strong> {{ subscription.expires_at }}</p>
-                  {% else %}
-                  <div class="subscription-status pending-subscription">
-                    <i class="bi bi-clock-fill"></i> Pending Approval
-                  </div>
-                  <p><strong>Plan:</strong> Monthly</p>
-                  <p><strong>Status:</strong> Pending</p>
-                  <p class="text-muted small">
-                    Your subscription is pending approval from admin.
+                  <p>
+                    <strong>Activated:</strong> {{
+                    monthly_subscription.activated_at }}
+                  </p>
+                  <p>
+                    <strong>Expires:</strong> {{ monthly_subscription.expires_at
+                    }}
                   </p>
                   {% endif %} {% else %}
                   <div class="subscription-status no-subscription">
                     <i class="bi bi-x-circle-fill"></i> No Active Subscription
                   </div>
-                  <p>You don't have an active subscription.</p>
-                  <button
-                    class="btn btn-primary w-100"
-                    data-bs-toggle="modal"
-                    data-bs-target="#subscriptionModal"
+                  <p class="text-muted small">
+                    You don't have an active monthly subscription. Please
+                    contact admin to subscribe.
+                  </p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Trainer Sessions -->
+              <div class="card">
+                <div class="card-header">
+                  <i class="bi bi-person-badge"></i> Trainer Sessions
+                </div>
+                <div class="card-body">
+                  {% if trainer_subscriptions %} {% for sub in
+                  trainer_subscriptions %}
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-2"
                   >
-                    <i class="bi bi-plus-circle"></i> Subscribe Now
-                  </button>
+                    <div>
+                      <strong>{{ sub.trainer_name }}</strong>
+                      <span class="badge bg-info ms-2"
+                        >{{ sub.trainer_sessions }} sessions</span
+                      >
+                    </div>
+                    <button
+                      class="btn btn-sm btn-outline-primary use-session-btn"
+                      data-trainer-id="{{ sub.trainer_id }}"
+                      data-trainer-name="{{ sub.trainer_name }}"
+                    >
+                      Use Session
+                    </button>
+                  </div>
+                  {% endfor %} {% else %}
+                  <p class="text-muted">
+                    You don't have any trainer sessions. Please contact admin to
+                    purchase sessions.
+                  </p>
                   {% endif %}
                 </div>
               </div>
@@ -1549,13 +1714,6 @@
                       readonly
                     />
                   </div>
-                  <button
-                    class="btn btn-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#changePasswordModal"
-                  >
-                    Change Password
-                  </button>
 
                   <hr class="my-4" />
 
@@ -1761,6 +1919,68 @@
       </div>
     </div>
 
+    <!-- Set Trainer Price Modal -->
+    <div class="modal fade" id="setTrainerPriceModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Set Trainer Price</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="setTrainerPriceForm">
+              <input type="hidden" id="priceTrainerId" name="trainer_id" />
+              <div class="mb-3">
+                <label for="priceTrainerName" class="form-label"
+                  >Trainer Name</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="priceTrainerName"
+                  readonly
+                />
+              </div>
+              <div class="mb-3">
+                <label for="priceTrainerPrice" class="form-label"
+                  >Price per Session (MMK)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="priceTrainerPrice"
+                  name="price"
+                  min="0"
+                  step="100"
+                  required
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="confirmSetTrainerPriceBtn"
+            >
+              Set Price
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Create Blog Modal -->
     <div class="modal fade" id="createBlogModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
@@ -1900,6 +2120,145 @@
       </div>
     </div>
 
+    <!-- Create Subscription Modal -->
+    <div class="modal fade" id="createSubscriptionModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Subscription</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="createSubscriptionForm">
+              <div class="mb-3">
+                <label for="subscriptionUser" class="form-label">User</label>
+                <select
+                  class="form-select"
+                  id="subscriptionUser"
+                  name="user_id"
+                  required
+                >
+                  <option value="">Select User</option>
+                  {% for user in users %} {% if user.role != 'admin' %}
+                  <option value="{{ user.id }}">
+                    {{ user.username }} ({{ user.email }})
+                  </option>
+                  {% endif %} {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="subscriptionType" class="form-label"
+                  >Subscription Type</label
+                >
+                <select
+                  class="form-select"
+                  id="subscriptionType"
+                  name="subscription_type"
+                  required
+                >
+                  <option value="">Select Type</option>
+                  <option value="monthly">Monthly Subscription</option>
+                  <option value="trainer_sessions">Trainer Sessions</option>
+                </select>
+              </div>
+
+              <!-- Monthly Subscription Options -->
+              <div
+                id="monthlyOptions"
+                class="subscription-options"
+                style="display: none"
+              >
+                <div class="mb-3">
+                  <label for="subscriptionMonths" class="form-label"
+                    >Number of Months</label
+                  >
+                  <select
+                    class="form-select"
+                    id="subscriptionMonths"
+                    name="months"
+                  >
+                    <option value="1">1 Month</option>
+                    <option value="2">2 Months</option>
+                    <option value="3">3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                  </select>
+                </div>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle"></i> Price:
+                  <span id="monthlyPriceDisplay">{{ monthly_price }}</span> MMK
+                  per month
+                </div>
+              </div>
+
+              <!-- Trainer Sessions Options -->
+              <div
+                id="trainerOptions"
+                class="subscription-options"
+                style="display: none"
+              >
+                <div class="mb-3">
+                  <label for="subscriptionTrainer" class="form-label"
+                    >Trainer</label
+                  >
+                  <select
+                    class="form-select"
+                    id="subscriptionTrainer"
+                    name="trainer_id"
+                  >
+                    <option value="">Select Trainer</option>
+                    {% for trainer in trainers %}
+                    <option value="{{ trainer.id }}">
+                      {{ trainer.username }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="subscriptionSessions" class="form-label"
+                    >Number of Sessions</label
+                  >
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="subscriptionSessions"
+                    name="sessions"
+                    min="1"
+                    value="1"
+                  />
+                </div>
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle"></i> Price per session will be
+                  calculated based on trainer's rate
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="createSubscriptionBtn"
+            >
+              Add Subscription
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Send Message Modal -->
     <div class="modal fade" id="sendMessageModal" tabindex="-1">
       <div class="modal-dialog">
@@ -1951,126 +2310,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Change Password Modal -->
-    <div class="modal fade" id="changePasswordModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Change Password</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <form id="changePasswordForm">
-              <div class="mb-3">
-                <label for="currentPassword" class="form-label"
-                  >Current Password</label
-                >
-                <input
-                  type="password"
-                  class="form-control"
-                  id="currentPassword"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="newPassword" class="form-label">New Password</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="newPassword"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="confirmPassword" class="form-label"
-                  >Confirm New Password</label
-                >
-                <input
-                  type="password"
-                  class="form-control"
-                  id="confirmPassword"
-                  required
-                />
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="changePasswordBtn"
-            >
-              Change Password
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Subscription Modal -->
-    <div class="modal fade" id="subscriptionModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Subscribe to Gym</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <h6>Subscription Plan</h6>
-            <p><strong>Monthly Membership - 50,000 MMK</strong></p>
-            <p class="text-muted">
-              Access gym for one month from date of activation.
-            </p>
-
-            <div class="mt-4">
-              <h6>Payment Method</h6>
-              <p>Please scan KPay QR code below to complete your payment:</p>
-              <div class="kpay-qr-placeholder bg-light p-3 text-center">
-                <i class="bi bi-qr-code" style="font-size: 5rem"></i>
-                <p class="mt-2">KPay QR Code</p>
-              </div>
-              <p class="text-center mt-2">
-                After payment, click "Done" to submit your subscription for
-                approval.
-              </p>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="submitSubscriptionBtn"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Refresh Button -->
     <button class="btn btn-primary refresh-btn" onclick="location.reload()">
       <i class="bi bi-arrow-clockwise"></i>
@@ -2246,6 +2485,148 @@
             previewImage(this, document.getElementById("editImagePreview"));
           });
         }
+
+        function loadAppointments() {
+          // Only proceed if the user is a trainer or user
+          if (userRole !== "trainer" && userRole !== "user") return;
+
+          let url =
+            userRole === "trainer"
+              ? "/get-trainer-appointments"
+              : "/get-user-trainer-sessions";
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              const appointmentsTableBody = document.getElementById(
+                "appointmentsTableBody"
+              );
+              appointmentsTableBody.innerHTML = ""; // Clear loading spinner
+
+              if (data.success && data.appointments) {
+                if (data.appointments.length === 0) {
+                  const message =
+                    userRole === "trainer"
+                      ? "No clients have purchased sessions with you yet."
+                      : "You haven't purchased any trainer sessions yet.";
+
+                  appointmentsTableBody.innerHTML = `
+                    <tr>
+                      <td colspan="5" class="text-center">${message}</td>
+                    </tr>
+                  `;
+                } else {
+                  data.appointments.forEach((appointment) => {
+                    // Users can't complete sessions, only trainers can
+                    const actionButton =
+                      userRole === "trainer" &&
+                      appointment.remaining_sessions > 0
+                        ? `<button class="btn btn-sm btn-success complete-session-btn" 
+                            data-user-id="${appointment.user_id}" 
+                            data-subscription-id="${appointment.subscription_id}">
+                          <i class="bi bi-check-circle"></i> Done a Session
+                        </button>`
+                        : `<button class="btn btn-sm btn-secondary" disabled>
+                          <i class="bi bi-info-circle"></i> ${
+                            appointment.remaining_sessions > 0
+                              ? "View Only"
+                              : "All Sessions Completed"
+                          }
+                        </button>`;
+
+                    let rowHtml = "";
+                    if (userRole === "trainer") {
+                      rowHtml = `
+                        <tr>
+                          <td>${appointment.client_name}</td>
+                          <td>${appointment.total_sessions}</td>
+                          <td>${appointment.completed_sessions}</td>
+                          <td>
+                            <span class="badge bg-warning">${appointment.remaining_sessions}</span>
+                          </td>
+                          <td>${actionButton}</td>
+                        </tr>
+                      `;
+                    } else {
+                      rowHtml = `
+                        <tr>
+                          <td>${appointment.trainer_name}</td>
+                          <td>${appointment.total_sessions}</td>
+                          <td>${appointment.completed_sessions}</td>
+                          <td>
+                            <span class="badge bg-warning">${appointment.remaining_sessions}</span>
+                          </td>
+                          <td>${actionButton}</td>
+                        </tr>
+                      `;
+                    }
+
+                    appointmentsTableBody.innerHTML += rowHtml;
+                  });
+                }
+              } else {
+                appointmentsTableBody.innerHTML = `
+                  <tr>
+                    <td colspan="5" class="text-center text-danger">Error loading appointments.</td>
+                  </tr>
+                `;
+              }
+            })
+            .catch((error) => {
+              console.error("Error loading appointments:", error);
+              appointmentsTableBody.innerHTML = `
+                <tr>
+                  <td colspan="5" class="text-center text-danger">Error loading appointments.</td>
+                </tr>
+              `;
+            });
+        }
+
+        // Add event listener for trainer filter if it exists
+        document.addEventListener("DOMContentLoaded", function () {
+          const trainerFilter = document.getElementById("trainerFilter");
+          if (trainerFilter) {
+            trainerFilter.addEventListener("change", loadAppointments);
+          }
+        });
+        // Modify the main navigation click handler to load appointments when that tab is clicked
+        document
+          .querySelectorAll(".bottom-nav-item[data-tab]")
+          .forEach((item) => {
+            // We are adding to the existing event listener, not replacing it
+            const originalClickHandler = item.onclick;
+            item.addEventListener("click", function (e) {
+              // Run original logic first
+              if (originalClickHandler) originalClickHandler.call(this, e);
+
+              // Then add our new logic
+              const tabName = this.dataset.tab;
+              if (tabName === "appointments") {
+                loadAppointments();
+              }
+            });
+          });
+
+        // Add event listener for trainer filter if it exists
+        document.addEventListener("DOMContentLoaded", function () {
+          const trainerFilter = document.getElementById("trainerFilter");
+          if (trainerFilter) {
+            trainerFilter.addEventListener("change", loadAppointments);
+          }
+        });
+
+        // Also load appointments on initial page load if the tab is active (for trainers)
+        document.addEventListener("DOMContentLoaded", () => {
+          if (userRole === "trainer") {
+            // Check if the appointments tab is the active one
+            const activeTab = document.querySelector(
+              ".bottom-nav-item.active[data-tab]"
+            );
+            if (activeTab && activeTab.dataset.tab === "appointments") {
+              loadAppointments();
+            }
+          }
+        });
 
         // Load checked-in users (only for admin)
         function loadCheckedInUsers() {
@@ -2507,67 +2888,44 @@
           });
         }
 
-        // Change Password
-        const changePasswordBtn = document.getElementById("changePasswordBtn");
-        if (changePasswordBtn) {
-          changePasswordBtn.addEventListener("click", function () {
-            const currentPassword =
-              document.getElementById("currentPassword").value;
-            const newPassword = document.getElementById("newPassword").value;
-            const confirmPassword =
-              document.getElementById("confirmPassword").value;
+        // Subscription Type Selection
+        const subscriptionTypeSelect =
+          document.getElementById("subscriptionType");
+        if (subscriptionTypeSelect) {
+          subscriptionTypeSelect.addEventListener("change", function () {
+            const monthlyOptions = document.getElementById("monthlyOptions");
+            const trainerOptions = document.getElementById("trainerOptions");
 
-            if (!currentPassword || !newPassword || !confirmPassword) {
-              alert("Please fill in all fields");
-              return;
+            // Hide all options
+            monthlyOptions.style.display = "none";
+            trainerOptions.style.display = "none";
+
+            // Show selected option
+            if (this.value === "monthly") {
+              monthlyOptions.style.display = "block";
+            } else if (this.value === "trainer_sessions") {
+              trainerOptions.style.display = "block";
             }
-
-            if (newPassword !== confirmPassword) {
-              alert("New password and confirm password do not match");
-              return;
-            }
-
-            const data = new URLSearchParams({
-              current_password: currentPassword,
-              new_password: newPassword,
-            });
-
-            fetch("/change-password", {
-              method: "POST",
-              body: data,
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                alert(data.message);
-                if (data.success) {
-                  bootstrap.Modal.getInstance(
-                    document.getElementById("changePasswordModal")
-                  ).hide();
-                  document.getElementById("changePasswordForm").reset();
-                }
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert("An error occurred while changing password");
-              });
           });
         }
 
-        // Subscription Functions
-        const submitSubscriptionBtn = document.getElementById(
-          "submitSubscriptionBtn"
+        // Create Subscription
+        const createSubscriptionBtn = document.getElementById(
+          "createSubscriptionBtn"
         );
-        if (submitSubscriptionBtn) {
-          submitSubscriptionBtn.addEventListener("click", function () {
-            const data = new URLSearchParams({ plan: "monthly" });
+        if (createSubscriptionBtn) {
+          createSubscriptionBtn.addEventListener("click", function () {
+            const form = document.getElementById("createSubscriptionForm");
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData);
 
-            fetch("/create-subscription", { method: "POST", body: data })
+            fetch("/create-user-subscription", { method: "POST", body: data })
               .then((response) => response.json())
               .then((data) => {
                 alert(data.message);
                 if (data.success) {
                   bootstrap.Modal.getInstance(
-                    document.getElementById("subscriptionModal")
+                    document.getElementById("createSubscriptionModal")
                   ).hide();
                   location.reload();
                 }
@@ -2578,6 +2936,165 @@
               });
           });
         }
+
+        // Update Monthly Price
+        const updateMonthlyPriceBtn = document.getElementById(
+          "updateMonthlyPriceBtn"
+        );
+        if (updateMonthlyPriceBtn) {
+          updateMonthlyPriceBtn.addEventListener("click", function () {
+            const price = document.getElementById("newMonthlyPrice").value;
+
+            if (!price) {
+              alert("Please enter a valid price");
+              return;
+            }
+
+            const data = new URLSearchParams({ price: price });
+
+            fetch("/update-monthly-price", { method: "POST", body: data })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                  location.reload();
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while updating price");
+              });
+          });
+        }
+
+        // Update Trainer Price
+        document
+          .querySelectorAll(".update-trainer-price-btn")
+          .forEach((button) => {
+            button.addEventListener("click", function () {
+              const trainerId = this.dataset.trainerId;
+              const priceInput = document.getElementById(
+                `trainerPrice${trainerId}`
+              );
+              const price = priceInput.value;
+
+              if (!price) {
+                alert("Please enter a valid price");
+                return;
+              }
+
+              const data = new URLSearchParams({
+                trainer_id: trainerId,
+                price: price,
+              });
+
+              fetch("/update-trainer-price", { method: "POST", body: data })
+                .then((response) => response.json())
+                .then((data) => {
+                  alert(data.message);
+                  if (data.success) {
+                    location.reload();
+                  }
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                  alert("An error occurred while updating price");
+                });
+            });
+          });
+        // Set Trainer Price button (for individual trainers)
+        document.addEventListener("click", function (e) {
+          if (e.target.closest(".btn-set-trainer-price")) {
+            const button = e.target.closest(".btn-set-trainer-price");
+            const trainerId = button.dataset.trainerId;
+            const trainerName = button.dataset.trainerName;
+
+            document.getElementById("priceTrainerId").value = trainerId;
+            document.getElementById("priceTrainerName").value = trainerName;
+
+            // Fetch and pre-fill current price
+            fetch(`/get-trainer-price?trainer_id=${trainerId}`)
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success && data.price) {
+                  document.getElementById("priceTrainerPrice").value =
+                    data.price;
+                } else {
+                  document.getElementById("priceTrainerPrice").value = ""; // Clear if no price set
+                }
+              })
+              .catch((error) => console.error("Error fetching price:", error));
+
+            new bootstrap.Modal(
+              document.getElementById("setTrainerPriceModal")
+            ).show();
+          }
+        });
+
+        // Confirm Set Price button in modal
+        const confirmSetTrainerPriceBtn = document.getElementById(
+          "confirmSetTrainerPriceBtn"
+        );
+        if (confirmSetTrainerPriceBtn) {
+          confirmSetTrainerPriceBtn.addEventListener("click", function () {
+            const form = document.getElementById("setTrainerPriceForm");
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData);
+
+            fetch("/set-trainer-price", { method: "POST", body: data })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                  bootstrap.Modal.getInstance(
+                    document.getElementById("setTrainerPriceModal")
+                  ).hide();
+                  // We can refresh the pricing table or the whole page. Let's refresh the page for simplicity.
+                  location.reload();
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while setting the price.");
+              });
+          });
+        }
+
+        // Use Trainer Session
+        document.querySelectorAll(".use-session-btn").forEach((button) => {
+          button.addEventListener("click", function () {
+            const trainerId = this.dataset.trainerId;
+            const trainerName = this.dataset.trainerName;
+
+            if (
+              !confirm(
+                `Are you sure you want to use a session with ${trainerName}?`
+              )
+            ) {
+              return;
+            }
+
+            const data = new URLSearchParams({ trainer_id: trainerId });
+
+            fetch("/use-trainer-session", { method: "POST", body: data })
+              .then((response) => response.json())
+              .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                  if (data.remaining_sessions <= 0) {
+                    location.reload();
+                  } else {
+                    // Update the button text with remaining sessions
+                    this.textContent = `Use Session (${data.remaining_sessions} left)`;
+                  }
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while using session");
+              });
+          });
+        });
 
         // Generate new QR codes
         const generateNewQrBtn = document.getElementById("generateNewQrBtn");
@@ -2631,85 +3148,6 @@
               });
           });
         }
-
-        // Approve/Reject Subscriptions
-        document.addEventListener("click", function (e) {
-          if (e.target.closest(".btn-approve-subscription")) {
-            e.preventDefault();
-            const button = e.target.closest(".btn-approve-subscription");
-            const subId = button.dataset.subscriptionId;
-
-            if (!subId) {
-              console.error("Subscription ID not found");
-              alert("Error: Subscription ID not found");
-              return;
-            }
-
-            fetch("/approve-subscription", {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `subscription_id=${encodeURIComponent(subId)}`,
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error("Network response was not ok");
-                }
-                return response.json();
-              })
-              .then((data) => {
-                console.log("Response:", data);
-                alert(data.message);
-                if (data.success) location.reload();
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert(
-                  "An error occurred while approving the subscription: " +
-                    error.message
-                );
-              });
-          }
-
-          if (e.target.closest(".btn-reject-subscription")) {
-            e.preventDefault();
-            const button = e.target.closest(".btn-reject-subscription");
-            const subId = button.dataset.subscriptionId;
-
-            if (!subId) {
-              console.error("Subscription ID not found");
-              alert("Error: Subscription ID not found");
-              return;
-            }
-
-            if (confirm("Are you sure you want to reject this subscription?")) {
-              fetch("/reject-subscription", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: `subscription_id=${encodeURIComponent(subId)}`,
-              })
-                .then((response) => {
-                  if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  return response.json();
-                })
-                .then((data) => {
-                  console.log("Response:", data);
-                  alert(data.message);
-                  if (data.success) location.reload();
-                })
-                .catch((error) => {
-                  console.error("Error:", error);
-                  alert(
-                    "An error occurred while rejecting the subscription: " +
-                      error.message
-                  );
-                });
-            }
-          }
-        });
 
         // Reply to Messages
         document.addEventListener("click", function (e) {
@@ -2960,10 +3398,14 @@
                       html += `
                         <tr>
                           <td>${record.username}</td>
-                          <td><span class="badge bg-${record.role === 'trainer' ? 'info' : 'secondary'}">${record.role}</span></td>
+                          <td><span class="badge bg-${
+                            record.role === "trainer" ? "info" : "secondary"
+                          }">${record.role}</span></td>
                           <td>${actionIcon} ${actionText}</td>
                           <td>${timestamp}</td>
-                          <td><span class="badge bg-primary">${record.checkin_days} days</span></td>
+                          <td><span class="badge bg-primary">${
+                            record.checkin_days
+                          } days</span></td>
                         </tr>
                       `;
                     });
