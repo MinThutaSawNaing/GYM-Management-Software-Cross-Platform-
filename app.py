@@ -79,13 +79,13 @@ def init_db():
     )
     ''')
 
-    # Updated to support monthly and trainer session subscriptions
+    # Monthly membership only
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS subscriptions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         subscription_type TEXT NOT NULL, -- 'monthly'
-        status TEXT DEFAULT 'active',
+        status TEXT DEFAULT 'active', -- 'active' or 'expired'
         months INTEGER DEFAULT 0,
         price REAL,
         activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -94,6 +94,46 @@ def init_db():
         FOREIGN KEY (user_id) REFERENCES users (id)
     )
     ''')
+    
+    # Trainer pricing table (each trainer can have different fee)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trainer_pricing (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        trainer_id INTEGER UNIQUE NOT NULL,
+        price_per_session REAL NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trainer_id) REFERENCES users (id)
+    )
+    ''')
+
+    
+    # Trainer session bookings (paid per session)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS trainer_bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        trainer_id INTEGER NOT NULL,
+
+        session_datetime TIMESTAMP NOT NULL,
+        duration_minutes INTEGER DEFAULT 60,
+        sessions_count INTEGER DEFAULT 1,
+
+        price_per_session REAL NOT NULL,
+        total_price REAL NOT NULL,
+
+        status TEXT DEFAULT 'pending',     -- pending/confirmed/completed/cancelled
+        paid_status TEXT DEFAULT 'unpaid', -- unpaid/paid/refunded
+
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (trainer_id) REFERENCES users (id)
+    )
+    ''')
+
+
     # System settings table for monthly subscription price
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS system_settings (
@@ -541,6 +581,29 @@ def admin():
     user_qr = conn.execute('SELECT code_value FROM qr_codes WHERE code_type = "user"').fetchone()
     trainer_qr = conn.execute('SELECT code_value FROM qr_codes WHERE code_type = "trainer"').fetchone()
     
+    # Trainers list (for pricing + booking modal)
+    trainers = conn.execute(
+        "SELECT id, username FROM users WHERE role = 'trainer' ORDER BY username"
+    ).fetchall()
+
+    # Trainer price map (trainer_id -> price)
+    pricing_rows = conn.execute(
+        "SELECT trainer_id, price_per_session FROM trainer_pricing"
+    ).fetchall()
+    trainer_price_map = {row["trainer_id"]: row["price_per_session"] for row in pricing_rows}
+
+    # Trainer bookings table for admin
+    trainer_bookings_admin = conn.execute("""
+        SELECT b.*,
+               u.username AS user_name,
+               t.username AS trainer_name
+        FROM trainer_bookings b
+        JOIN users u ON b.user_id = u.id
+        JOIN users t ON b.trainer_id = t.id
+        ORDER BY b.session_datetime DESC
+    """).fetchall()
+
+    
     conn.close()
     
     return render_template(
@@ -557,6 +620,10 @@ def admin():
         user_qr=user_qr['code_value'] if user_qr else None,
         trainer_qr=trainer_qr['code_value'] if trainer_qr else None,
         monthly_price=monthly_price,
+        trainers=trainers,
+        trainer_price_map=trainer_price_map,
+        trainer_bookings_admin=trainer_bookings_admin,
+
     )
 
 @app.route('/create-user', methods=['POST'])
@@ -1132,6 +1199,90 @@ def get_attendance_records():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+@app.route('/admin-set-trainer-price', methods=['POST'])
+def admin_set_trainer_price():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+
+    trainer_id = request.form.get('trainer_id')
+    price = request.form.get('price_per_session')
+
+    if not trainer_id or not price or not str(price).replace('.', '', 1).isdigit():
+        return jsonify({'success': False, 'message': 'Invalid input'})
+
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO trainer_pricing (trainer_id, price_per_session, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(trainer_id) DO UPDATE SET
+            price_per_session = excluded.price_per_session,
+            updated_at = excluded.updated_at
+    ''', (trainer_id, float(price), datetime.now()))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Trainer price updated.'})
+@app.route('/admin-create-trainer-booking', methods=['POST'])
+def admin_create_trainer_booking():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+
+    user_id = request.form.get('user_id')
+    trainer_id = request.form.get('trainer_id')
+    session_datetime = request.form.get('session_datetime')  # datetime-local
+    duration_minutes = int(request.form.get('duration_minutes', 60))
+    sessions_count = int(request.form.get('sessions_count', 1))
+    notes = request.form.get('notes', '')
+
+    if not user_id or not trainer_id or not session_datetime:
+        return jsonify({'success': False, 'message': 'Missing required fields'})
+
+    dt = session_datetime.replace('T', ' ') + ':00'
+
+    conn = get_db_connection()
+    row = conn.execute(
+        'SELECT price_per_session FROM trainer_pricing WHERE trainer_id = ?',
+        (trainer_id,)
+    ).fetchone()
+
+    price_per_session = float(row['price_per_session']) if row else 30000.0
+    total_price = price_per_session * sessions_count
+
+    conn.execute('''
+        INSERT INTO trainer_bookings
+        (user_id, trainer_id, session_datetime, duration_minutes, sessions_count,
+         price_per_session, total_price, status, paid_status, notes, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'unpaid', ?, ?)
+    ''', (user_id, trainer_id, dt, duration_minutes, sessions_count,
+          price_per_session, total_price, notes, datetime.now()))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Trainer booking created.', 'total_price': total_price})
+
+@app.route('/admin-mark-booking-paid', methods=['POST'])
+def admin_mark_booking_paid():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'})
+
+    booking_id = request.form.get('booking_id')
+    if not booking_id:
+        return jsonify({'success': False, 'message': 'Booking ID required'})
+
+    conn = get_db_connection()
+    conn.execute('''
+        UPDATE trainer_bookings
+        SET paid_status='paid', updated_at=?
+        WHERE id=?
+    ''', (datetime.now(), booking_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': 'Marked as paid.'})
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
