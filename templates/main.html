@@ -857,18 +857,9 @@
                         <td>{{ sub.id }}</td>
                         <td>{{ sub.username }}</td>
                         <td>
-                          {% if sub.subscription_type == 'monthly' %}
                           <span class="badge bg-primary">Monthly</span>
-                          {% else %}
-                          <span class="badge bg-info">Trainer Sessions</span>
-                          {% endif %}
                         </td>
-                        <td>
-                          {% if sub.subscription_type == 'monthly' %} {{
-                          sub.months }} month(s) {% else %} {{
-                          sub.trainer_sessions }} session(s) with {{
-                          sub.trainer_name }} {% endif %}
-                        </td>
+                        <td>{{ sub.months }} month(s)</td>
                         <td>{{ sub.price }} MMK</td>
                         <td>{{ sub.activated_at }}</td>
                         <td>{{ sub.expires_at or '-' }}</td>
@@ -920,52 +911,6 @@
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Trainer Session Pricing -->
-                <div class="card">
-                  <div class="card-header">
-                    <i class="bi bi-person-badge"></i> Trainer Session Pricing
-                  </div>
-                  <div class="card-body">
-                    <div class="table-responsive">
-                      <table class="table table-striped">
-                        <thead>
-                          <tr>
-                            <th>Trainer</th>
-                            <th>Current Price per Session</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {% for pricing in trainer_pricing %}
-                          <tr>
-                            <td>{{ pricing.username }}</td>
-                            <td>{{ pricing.price_per_session }} MMK</td>
-                            <td>
-                              <div class="input-group">
-                                <input
-                                  type="number"
-                                  class="form-control"
-                                  id="trainerPrice{{ pricing.trainer_id }}"
-                                  placeholder="Enter new price"
-                                  value="{{ pricing.price_per_session }}"
-                                />
-                                <span class="input-group-text">MMK</span>
-                                <button
-                                  class="btn btn-sm btn-primary update-trainer-price-btn"
-                                  data-trainer-id="{{ pricing.trainer_id }}"
-                                >
-                                  Update
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                          {% endfor %}
-                        </tbody>
-                      </table>
                     </div>
                   </div>
                 </div>
@@ -1542,42 +1487,7 @@
                   {% endif %}
                 </div>
               </div>
-
-              <!-- Trainer Sessions -->
-              <div class="card">
-                <div class="card-header">
-                  <i class="bi bi-person-badge"></i> Trainer Sessions
-                </div>
-                <div class="card-body">
-                  {% if trainer_subscriptions %} {% for sub in
-                  trainer_subscriptions %}
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-2"
-                  >
-                    <div>
-                      <strong>{{ sub.trainer_name }}</strong>
-                      <span class="badge bg-info ms-2"
-                        >{{ sub.trainer_sessions }} sessions</span
-                      >
-                    </div>
-                    <button
-                      class="btn btn-sm btn-outline-primary use-session-btn"
-                      data-trainer-id="{{ sub.trainer_id }}"
-                      data-trainer-name="{{ sub.trainer_name }}"
-                    >
-                      Use Session
-                    </button>
-                  </div>
-                  {% endfor %} {% else %}
-                  <p class="text-muted">
-                    You don't have any trainer sessions. Please contact admin to
-                    purchase sessions.
-                  </p>
-                  {% endif %}
-                </div>
-              </div>
             </div>
-
             <!-- Settings Section -->
             <div class="content-section" id="settings">
               <div class="card">
@@ -2003,7 +1913,6 @@
                 >
                   <option value="">Select Type</option>
                   <option value="monthly">Monthly Subscription</option>
-                  <option value="trainer_sessions">Trainer Sessions</option>
                 </select>
               </div>
 
@@ -2033,48 +1942,6 @@
                   <i class="bi bi-info-circle"></i> Price:
                   <span id="monthlyPriceDisplay">{{ monthly_price }}</span> MMK
                   per month
-                </div>
-              </div>
-
-              <!-- Trainer Sessions Options -->
-              <div
-                id="trainerOptions"
-                class="subscription-options"
-                style="display: none"
-              >
-                <div class="mb-3">
-                  <label for="subscriptionTrainer" class="form-label"
-                    >Trainer</label
-                  >
-                  <select
-                    class="form-select"
-                    id="subscriptionTrainer"
-                    name="trainer_id"
-                  >
-                    <option value="">Select Trainer</option>
-                    {% for trainer in trainers %}
-                    <option value="{{ trainer.id }}">
-                      {{ trainer.username }}
-                    </option>
-                    {% endfor %}
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="subscriptionSessions" class="form-label"
-                    >Number of Sessions</label
-                  >
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="subscriptionSessions"
-                    name="sessions"
-                    min="1"
-                    value="1"
-                  />
-                </div>
-                <div class="alert alert-info">
-                  <i class="bi bi-info-circle"></i> Price per session will be
-                  calculated based on trainer's rate
                 </div>
               </div>
             </form>
@@ -2592,17 +2459,13 @@
         if (subscriptionTypeSelect) {
           subscriptionTypeSelect.addEventListener("change", function () {
             const monthlyOptions = document.getElementById("monthlyOptions");
-            const trainerOptions = document.getElementById("trainerOptions");
 
             // Hide all options
             monthlyOptions.style.display = "none";
-            trainerOptions.style.display = "none";
 
             // Show selected option
             if (this.value === "monthly") {
               monthlyOptions.style.display = "block";
-            } else if (this.value === "trainer_sessions") {
-              trainerOptions.style.display = "block";
             }
           });
         }
@@ -2664,78 +2527,6 @@
               });
           });
         }
-
-        // Update Trainer Price
-        document
-          .querySelectorAll(".update-trainer-price-btn")
-          .forEach((button) => {
-            button.addEventListener("click", function () {
-              const trainerId = this.dataset.trainerId;
-              const priceInput = document.getElementById(
-                `trainerPrice${trainerId}`
-              );
-              const price = priceInput.value;
-
-              if (!price) {
-                alert("Please enter a valid price");
-                return;
-              }
-
-              const data = new URLSearchParams({
-                trainer_id: trainerId,
-                price: price,
-              });
-
-              fetch("/update-trainer-price", { method: "POST", body: data })
-                .then((response) => response.json())
-                .then((data) => {
-                  alert(data.message);
-                  if (data.success) {
-                    location.reload();
-                  }
-                })
-                .catch((error) => {
-                  console.error("Error:", error);
-                  alert("An error occurred while updating price");
-                });
-            });
-          });
-
-        // Use Trainer Session
-        document.querySelectorAll(".use-session-btn").forEach((button) => {
-          button.addEventListener("click", function () {
-            const trainerId = this.dataset.trainerId;
-            const trainerName = this.dataset.trainerName;
-
-            if (
-              !confirm(
-                `Are you sure you want to use a session with ${trainerName}?`
-              )
-            ) {
-              return;
-            }
-
-            const data = new URLSearchParams({ trainer_id: trainerId });
-
-            fetch("/use-trainer-session", { method: "POST", body: data })
-              .then((response) => response.json())
-              .then((data) => {
-                alert(data.message);
-                if (data.success) {
-                  if (data.remaining_sessions <= 0) {
-                    location.reload();
-                  } else {
-                    // Update the button text with remaining sessions
-                    this.textContent = `Use Session (${data.remaining_sessions} left)`;
-                  }
-                }
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                alert("An error occurred while using session");
-              });
-          });
-        });
 
         // Generate new QR codes
         const generateNewQrBtn = document.getElementById("generateNewQrBtn");

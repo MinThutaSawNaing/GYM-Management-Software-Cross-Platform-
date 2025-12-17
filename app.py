@@ -84,32 +84,16 @@ def init_db():
     CREATE TABLE IF NOT EXISTS subscriptions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
-        subscription_type TEXT NOT NULL, -- 'monthly' or 'trainer_sessions'
-        status TEXT DEFAULT 'active', -- 'active' or 'expired'
-        months INTEGER DEFAULT 0, -- Number of months for monthly subscription
-        trainer_id INTEGER, -- Trainer ID for trainer sessions
-        trainer_sessions INTEGER DEFAULT 0, -- Number of trainer sessions
-        price REAL, -- Price paid for this subscription
+        subscription_type TEXT NOT NULL, -- 'monthly'
+        status TEXT DEFAULT 'active',
+        months INTEGER DEFAULT 0,
+        price REAL,
         activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id),
-        FOREIGN KEY (trainer_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users (id)
     )
     ''')
-
-    # Trainer pricing table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS trainer_pricing (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        trainer_id INTEGER,
-        price_per_session REAL NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (trainer_id) REFERENCES users (id)
-    )
-    ''')
-
     # System settings table for monthly subscription price
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS system_settings (
@@ -169,8 +153,6 @@ def init_db():
         # Add new columns
         cursor.execute("ALTER TABLE subscriptions ADD COLUMN subscription_type TEXT")
         cursor.execute("ALTER TABLE subscriptions ADD COLUMN months INTEGER DEFAULT 0")
-        cursor.execute("ALTER TABLE subscriptions ADD COLUMN trainer_id INTEGER")
-        cursor.execute("ALTER TABLE subscriptions ADD COLUMN trainer_sessions INTEGER DEFAULT 0")
         cursor.execute("ALTER TABLE subscriptions ADD COLUMN price REAL")
         
         # Migrate existing data
@@ -215,16 +197,7 @@ def init_db():
     cursor.execute("SELECT * FROM system_settings WHERE setting_key='monthly_price'")
     if not cursor.fetchone():
         cursor.execute("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)", 
-                    ('monthly_price', '50000')) # Default 50,000 MMK
-
-    # Initialize trainer pricing for all trainers
-    trainers = cursor.execute("SELECT id FROM users WHERE role='trainer'").fetchall()
-    for trainer in trainers:
-        cursor.execute("SELECT * FROM trainer_pricing WHERE trainer_id=?", (trainer['id'],))
-        if not cursor.fetchone():
-            cursor.execute("INSERT INTO trainer_pricing (trainer_id, price_per_session) VALUES (?, ?)", 
-                        (trainer['id'], 20000)) # Default 20,000 MMK per session
-    
+                    ('monthly_price', '50000')) # Default 50,000 MMK   
     # Check if QR codes exist, if not create them
     cursor.execute("SELECT * FROM qr_codes WHERE code_type='user'")
     if not cursor.fetchone():
@@ -486,11 +459,6 @@ def main():
         (user_id,)
     ).fetchone()
 
-    trainer_subscriptions = conn.execute(
-        'SELECT s.*, t.username as trainer_name FROM subscriptions s JOIN users t ON s.trainer_id = t.id WHERE s.user_id = ? AND s.subscription_type = "trainer_sessions" AND s.status = "active"',
-        (user_id,)
-    ).fetchall()
-
     # Check if monthly subscription is expired
     is_monthly_expired = False
     if monthly_subscription and monthly_subscription['expires_at']:
@@ -516,7 +484,6 @@ def main():
         messages=messages,
         monthly_subscription=monthly_subscription,
         is_monthly_expired=is_monthly_expired,
-        trainer_subscriptions=trainer_subscriptions,
         check_logs=check_logs,
         user_qr=user_qr['code_value'] if user_qr else None,
         trainer_qr=trainer_qr['code_value'] if trainer_qr else None
@@ -538,10 +505,9 @@ def admin():
     
     # Get all subscriptions
     all_subscriptions = conn.execute('''
-        SELECT s.*, u.username, u.email, t.username as trainer_name 
-        FROM subscriptions s 
-        JOIN users u ON s.user_id = u.id 
-        LEFT JOIN users t ON s.trainer_id = t.id 
+        SELECT s.*, u.username, u.email
+        FROM subscriptions s
+        JOIN users u ON s.user_id = u.id
         ORDER BY s.created_at DESC
     ''').fetchall()
 
@@ -561,16 +527,6 @@ def admin():
     ).fetchone()
     monthly_price = monthly_price_setting['setting_value'] if monthly_price_setting else '50000'
 
-    # Get trainer pricing
-    trainer_pricing = conn.execute('''
-        SELECT tp.*, u.username 
-        FROM trainer_pricing tp 
-        JOIN users u ON tp.trainer_id = u.id
-    ''').fetchall()
-
-    # Get all trainers for dropdown
-    trainers = conn.execute('SELECT id, username FROM users WHERE role = "trainer"').fetchall()
-        
     # Get all messages
     all_messages = conn.execute(
         'SELECT m.*, u.username FROM messages m JOIN users u ON m.user_id = u.id ORDER BY m.created_at DESC'
@@ -601,8 +557,6 @@ def admin():
         user_qr=user_qr['code_value'] if user_qr else None,
         trainer_qr=trainer_qr['code_value'] if trainer_qr else None,
         monthly_price=monthly_price,
-        trainer_pricing=trainer_pricing,
-        trainers=trainers
     )
 
 @app.route('/create-user', methods=['POST'])
@@ -766,23 +720,6 @@ def create_user_subscription():
             'INSERT INTO subscriptions (user_id, subscription_type, status, months, price, activated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
             (user_id, subscription_type, 'active', months, price, now, expires_at)
         )
-        
-    elif subscription_type == 'trainer_sessions':
-        trainer_id = request.form.get('trainer_id')
-        sessions = int(request.form.get('sessions', 1))
-        
-        # Get trainer session price
-        trainer_price = conn.execute(
-            'SELECT price_per_session FROM trainer_pricing WHERE trainer_id = ?', 
-            (trainer_id,)
-        ).fetchone()
-        price = float(trainer_price['price_per_session']) * sessions if trainer_price else 20000.0 * sessions
-        
-        # Create trainer session subscription
-        conn.execute(
-            'INSERT INTO subscriptions (user_id, subscription_type, status, trainer_id, trainer_sessions, price, activated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (user_id, subscription_type, 'active', trainer_id, sessions, price, now)
-        )
     
     conn.commit()
     conn.close()
@@ -809,79 +746,6 @@ def update_monthly_price():
     
     return jsonify({'success': True, 'message': 'Monthly subscription price updated successfully.'})
 
-@app.route('/update-trainer-price', methods=['POST'])
-def update_trainer_price():
-    if not is_logged_in() or get_user_role() != 'admin':
-        return jsonify({'success': False, 'message': 'Unauthorized'})
-    
-    trainer_id = request.form.get('trainer_id')
-    price = request.form.get('price')
-    
-    if not price or not price.replace('.', '', 1).isdigit():
-        return jsonify({'success': False, 'message': 'Invalid price format'})
-    
-    conn = get_db_connection()
-    
-    # Check if price entry exists
-    existing = conn.execute(
-        'SELECT id FROM trainer_pricing WHERE trainer_id = ?', 
-        (trainer_id,)
-    ).fetchone()
-    
-    if existing:
-        conn.execute(
-            'UPDATE trainer_pricing SET price_per_session = ?, updated_at = ? WHERE trainer_id = ?',
-            (price, datetime.now(), trainer_id)
-        )
-    else:
-        conn.execute(
-            'INSERT INTO trainer_pricing (trainer_id, price_per_session, updated_at) VALUES (?, ?, ?)',
-            (trainer_id, price, datetime.now())
-        )
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'success': True, 'message': 'Trainer session price updated successfully.'})
-
-@app.route('/use-trainer-session', methods=['POST'])
-def use_trainer_session():
-    if not is_logged_in():
-        return jsonify({'success': False, 'message': 'Unauthorized'})
-    
-    user_id = session['user_id']
-    trainer_id = request.form.get('trainer_id')
-    
-    conn = get_db_connection()
-    
-    # Find active trainer session subscription for this trainer
-    subscription = conn.execute(
-        'SELECT * FROM subscriptions WHERE user_id = ? AND trainer_id = ? AND subscription_type = "trainer_sessions" AND status = "active" AND trainer_sessions > 0',
-        (user_id, trainer_id)
-    ).fetchone()
-    
-    if not subscription:
-        conn.close()
-        return jsonify({'success': False, 'message': 'No active trainer sessions found for this trainer.'})
-    
-    # Decrement session count
-    new_sessions = subscription['trainer_sessions'] - 1
-    if new_sessions <= 0:
-        # Mark as expired if no sessions left
-        conn.execute(
-            'UPDATE subscriptions SET trainer_sessions = ?, status = "expired" WHERE id = ?',
-            (new_sessions, subscription['id'])
-        )
-    else:
-        conn.execute(
-            'UPDATE subscriptions SET trainer_sessions = ? WHERE id = ?',
-            (new_sessions, subscription['id'])
-        )
-    
-    conn.commit()
-    conn.close()
-    
-    return jsonify({'success': True, 'message': 'Trainer session used successfully.', 'remaining_sessions': new_sessions})
 @app.route('/send-message', methods=['POST'])
 def send_message():
     if not is_logged_in():
