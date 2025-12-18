@@ -187,6 +187,10 @@
         overflow: hidden;
       }
 
+      .table-responsive:not(.mobile-table-scroll) {
+        overflow: hidden;
+      }
+
       .table {
         margin-bottom: 0;
       }
@@ -378,6 +382,16 @@
         to {
           opacity: 1;
         }
+      }
+
+      /* Mobile horizontal scroll for wide tables */
+      .mobile-table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .mobile-table-scroll table {
+        min-width: 700px; /* force horizontal scroll on small screens */
       }
 
       /* Refresh Button */
@@ -1011,7 +1025,7 @@
                     <i class="bi bi-person-badge"></i> Trainer Session Pricing
                   </div>
                   <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive mobile-table-scroll">
                       <table class="table table-striped align-middle">
                         <thead>
                           <tr>
@@ -1634,7 +1648,7 @@
                 <div class="card-body">
                   {% if role == 'trainer' %} {% if trainer_bookings_for_trainer
                   and trainer_bookings_for_trainer|length > 0 %}
-                  <div class="table-responsive">
+                  <div class="table-responsive mobile-table-scroll">
                     <table class="table table-striped align-middle">
                       <thead>
                         <tr>
@@ -1674,7 +1688,7 @@
                   </p>
                   {% endif %} {% else %} {% if trainer_bookings_user and
                   trainer_bookings_user|length > 0 %}
-                  <div class="table-responsive">
+                  <div class="table-responsive mobile-table-scroll">
                     <table class="table table-striped align-middle">
                       <thead>
                         <tr>
