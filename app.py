@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
 from PIL import Image
+from datetime import datetime, timedelta
+from flask import jsonify, request
 
 app = Flask(__name__)
 
@@ -1317,6 +1319,73 @@ def admin_mark_booking_paid():
     conn.close()
 
     return jsonify({'success': True, 'message': 'Marked as paid.'})
+
+@app.route('/admin-report-data')
+def admin_report_data():
+    if not is_logged_in() or get_user_role() != 'admin':
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    days = int(request.args.get("days", 30))
+    start_dt = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00")
+
+    conn = get_db_connection()
+
+    # Monthly revenue by day (subscriptions.price)
+    monthly_rows = conn.execute("""
+        SELECT strftime('%Y-%m-%d', created_at) AS day,
+               COALESCE(SUM(price), 0) AS total
+        FROM subscriptions
+        WHERE subscription_type = 'monthly'
+          AND created_at >= ?
+        GROUP BY day
+        ORDER BY day
+    """, (start_dt,)).fetchall()
+
+    # Trainer revenue by day (paid trainer_bookings.total_price)
+    trainer_rows = conn.execute("""
+        SELECT strftime('%Y-%m-%d', created_at) AS day,
+               COALESCE(SUM(total_price), 0) AS total
+        FROM trainer_bookings
+        WHERE paid_status = 'paid'
+          AND created_at >= ?
+        GROUP BY day
+        ORDER BY day
+    """, (start_dt,)).fetchall()
+
+    # Attendance check-ins by day
+    attendance_rows = conn.execute("""
+        SELECT strftime('%Y-%m-%d', timestamp) AS day,
+               COUNT(*) AS count
+        FROM check_logs
+        WHERE check_type = 'in'
+          AND timestamp >= ?
+        GROUP BY day
+        ORDER BY day
+    """, (start_dt,)).fetchall()
+
+    # Top trainers by paid revenue
+    top_trainers = conn.execute("""
+        SELECT u.username AS trainer,
+               COALESCE(SUM(b.total_price), 0) AS total
+        FROM trainer_bookings b
+        JOIN users u ON u.id = b.trainer_id
+        WHERE b.paid_status = 'paid'
+          AND b.created_at >= ?
+        GROUP BY b.trainer_id
+        ORDER BY total DESC
+        LIMIT 10
+    """, (start_dt,)).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "monthly": [{"day": r["day"], "total": r["total"]} for r in monthly_rows],
+        "trainer": [{"day": r["day"], "total": r["total"]} for r in trainer_rows],
+        "attendance": [{"day": r["day"], "count": r["count"]} for r in attendance_rows],
+        "top_trainers": [{"trainer": r["trainer"], "total": r["total"]} for r in top_trainers],
+    })
+
 
 
 

@@ -507,6 +507,10 @@
           <i class="bi bi-people"></i>
           <span>Users</span>
         </a>
+        <a href="#" class="bottom-nav-item" data-tab="reports">
+          <i class="bi bi-bar-chart"></i>
+          <span>Reports</span>
+        </a>
         <a href="#checkedin" class="bottom-nav-item" data-tab="checkedin">
           <i class="bi bi-people-fill"></i>
           <span>Check-ins</span>
@@ -595,6 +599,20 @@
                   <i class="bi bi-calendar-check"></i> Attendance
                 </button>
               </li>
+
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="reports-tab"
+                  data-bs-toggle="tab"
+                  data-bs-target="#reports"
+                  type="button"
+                  role="tab"
+                >
+                  <i class="bi bi-bar-chart"></i> Reports
+                </button>
+              </li>
+
               <li class="nav-item" role="presentation">
                 <button
                   class="nav-link"
@@ -843,6 +861,57 @@
                       {% endfor %}
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              <div class="content-section" id="reports">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-3"
+                >
+                  <h3 class="h4 mb-0">
+                    <i class="bi bi-bar-chart"></i> Reports
+                  </h3>
+
+                  <select
+                    class="form-select"
+                    id="reportRange"
+                    style="max-width: 220px"
+                  >
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                  </select>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12 col-lg-6">
+                    <div class="card">
+                      <div class="card-header">
+                        Revenue (Monthly + Trainer Paid)
+                      </div>
+                      <div class="card-body">
+                        <canvas id="revenueChart" height="140"></canvas>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-lg-6">
+                    <div class="card">
+                      <div class="card-header">Attendance (Check-ins)</div>
+                      <div class="card-body">
+                        <canvas id="attendanceChart" height="140"></canvas>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">Top Trainers (Paid Revenue)</div>
+                      <div class="card-body">
+                        <canvas id="topTrainersChart" height="120"></canvas>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2363,6 +2432,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         // Define server-side variables as JS variables to avoid editor errors
@@ -2495,6 +2565,116 @@
               console.error(`Unable to get cameras: ${err}`);
               alert("Unable to access camera. Please check permissions.");
             });
+        }
+
+        let revenueChart, attendanceChart, topTrainersChart;
+
+        function buildSeriesMap(items, keyField, valueField) {
+          const map = new Map();
+          items.forEach((x) => map.set(x[keyField], x[valueField]));
+          return map;
+        }
+
+        function getDaysList(days) {
+          const out = [];
+          const now = new Date();
+          for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            out.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD
+          }
+          return out;
+        }
+
+        function destroyIfExists(ch) {
+          if (ch) ch.destroy();
+        }
+
+        async function loadReports() {
+          const rangeEl = document.getElementById("reportRange");
+          const days = rangeEl ? parseInt(rangeEl.value || "30", 10) : 30;
+
+          const res = await fetch(
+            `/admin-report-data?days=${encodeURIComponent(days)}`
+          );
+          const data = await res.json();
+          if (!data.success) {
+            alert(data.message || "Failed to load reports");
+            return;
+          }
+
+          const labels = getDaysList(days);
+
+          const monthlyMap = buildSeriesMap(data.monthly, "day", "total");
+          const trainerMap = buildSeriesMap(data.trainer, "day", "total");
+          const attendanceMap = buildSeriesMap(data.attendance, "day", "count");
+
+          const monthlySeries = labels.map((d) => monthlyMap.get(d) || 0);
+          const trainerSeries = labels.map((d) => trainerMap.get(d) || 0);
+          const attendanceSeries = labels.map((d) => attendanceMap.get(d) || 0);
+
+          // Revenue chart
+          destroyIfExists(revenueChart);
+          revenueChart = new Chart(document.getElementById("revenueChart"), {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                { label: "Monthly Revenue", data: monthlySeries },
+                { label: "Trainer Revenue (Paid)", data: trainerSeries },
+              ],
+            },
+            options: { responsive: true, maintainAspectRatio: false },
+          });
+
+          // Attendance chart
+          destroyIfExists(attendanceChart);
+          attendanceChart = new Chart(
+            document.getElementById("attendanceChart"),
+            {
+              type: "bar",
+              data: {
+                labels,
+                datasets: [{ label: "Check-ins", data: attendanceSeries }],
+              },
+              options: { responsive: true, maintainAspectRatio: false },
+            }
+          );
+
+          // Top trainers chart
+          const tLabels = data.top_trainers.map((x) => x.trainer);
+          const tData = data.top_trainers.map((x) => x.total);
+
+          destroyIfExists(topTrainersChart);
+          topTrainersChart = new Chart(
+            document.getElementById("topTrainersChart"),
+            {
+              type: "bar",
+              data: {
+                labels: tLabels,
+                datasets: [{ label: "Paid Revenue", data: tData }],
+              },
+              options: { responsive: true, maintainAspectRatio: false },
+            }
+          );
+        }
+
+        // Load reports when admin opens the reports tab
+        document
+          .querySelectorAll(".bottom-nav-item[data-tab]")
+          .forEach((item) => {
+            item.addEventListener("click", function () {
+              const tabName = this.dataset.tab;
+              if (tabName === "reports" && userRole === "admin") {
+                loadReports();
+              }
+            });
+          });
+
+        // Reload reports if range changes
+        const reportRangeEl = document.getElementById("reportRange");
+        if (reportRangeEl) {
+          reportRangeEl.addEventListener("change", loadReports);
         }
 
         // Image preview functions
