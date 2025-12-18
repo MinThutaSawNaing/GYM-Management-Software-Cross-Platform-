@@ -514,6 +514,38 @@ def main():
     user_qr = conn.execute('SELECT code_value FROM qr_codes WHERE code_type = "user"').fetchone()
     trainer_qr = conn.execute('SELECT code_value FROM qr_codes WHERE code_type = "trainer"').fetchone()
     
+    # Trainer bookings history for this user (for Subscription tab info)
+    trainer_bookings_user = conn.execute("""
+        SELECT b.session_datetime,
+               b.sessions_count,
+               b.price_per_session,
+               b.total_price,
+               b.paid_status,
+               t.username AS trainer_name
+        FROM trainer_bookings b
+        JOIN users t ON b.trainer_id = t.id
+        WHERE b.user_id = ?
+        ORDER BY b.session_datetime DESC
+    """, (user_id,)).fetchall()
+    
+    # If logged-in account is a trainer, show bookings assigned to this trainer
+    trainer_bookings_for_trainer = []
+    if role == 'trainer':
+        trainer_bookings_for_trainer = conn.execute("""
+            SELECT b.session_datetime,
+                b.sessions_count,
+                b.price_per_session,
+                b.total_price,
+                b.paid_status,
+                u.username AS user_name
+            FROM trainer_bookings b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.trainer_id = ?
+            ORDER BY b.session_datetime DESC
+        """, (user_id,)).fetchall()
+
+
+    
     conn.close()
     
     return render_template(
@@ -527,6 +559,10 @@ def main():
         check_logs=check_logs,
         user_qr=user_qr['code_value'] if user_qr else None,
         trainer_qr=trainer_qr['code_value'] if trainer_qr else None
+        ,trainer_bookings_user=trainer_bookings_user,
+        trainer_bookings_for_trainer=trainer_bookings_for_trainer,
+
+
     )
 
 @app.route('/admin')

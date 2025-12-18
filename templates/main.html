@@ -1626,6 +1626,93 @@
                   {% endif %}
                 </div>
               </div>
+              <!-- Trainer Session Info (User) -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <i class="bi bi-person-badge"></i> Trainer Sessions
+                </div>
+                <div class="card-body">
+                  {% if role == 'trainer' %} {% if trainer_bookings_for_trainer
+                  and trainer_bookings_for_trainer|length > 0 %}
+                  <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Session Date/Time</th>
+                          <th>Sessions Count</th>
+                          <th>Price / Session</th>
+                          <th>Total Price</th>
+                          <th>Paid Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for b in trainer_bookings_for_trainer %}
+                        <tr>
+                          <td>{{ b.user_name }}</td>
+                          <td>{{ b.session_datetime }}</td>
+                          <td>{{ b.sessions_count }}</td>
+                          <td>{{ b.price_per_session }} MMK</td>
+                          <td>{{ b.total_price }} MMK</td>
+                          <td>
+                            {% if b.paid_status == 'paid' %}
+                            <span class="badge bg-success">Paid</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark"
+                              >Unpaid</span
+                            >
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  {% else %}
+                  <p class="text-muted mb-0">
+                    No sessions assigned to you yet.
+                  </p>
+                  {% endif %} {% else %} {% if trainer_bookings_user and
+                  trainer_bookings_user|length > 0 %}
+                  <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                      <thead>
+                        <tr>
+                          <th>Trainer</th>
+                          <th>Session Date/Time</th>
+                          <th>Sessions Count</th>
+                          <th>Price / Session</th>
+                          <th>Total Price</th>
+                          <th>Paid Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for b in trainer_bookings_user %}
+                        <tr>
+                          <td>{{ b.trainer_name }}</td>
+                          <td>{{ b.session_datetime }}</td>
+                          <td>{{ b.sessions_count }}</td>
+                          <td>{{ b.price_per_session }} MMK</td>
+                          <td>{{ b.total_price }} MMK</td>
+                          <td>
+                            {% if b.paid_status == 'paid' %}
+                            <span class="badge bg-success">Paid</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark"
+                              >Unpaid</span
+                            >
+                            {% endif %}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  {% else %}
+                  <p class="text-muted mb-0">No trainer sessions found.</p>
+                  {% endif %} {% endif %}
+                </div>
+              </div>
             </div>
             <!-- Settings Section -->
             <div class="content-section" id="settings">
